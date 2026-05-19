@@ -1,255 +1,456 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  MonitorUp,
-  PhoneOff,
-  CheckCircle2,
-  Circle,
-  Users,
-  Radio,
-  MessageSquare,
-  Star,
-} from 'lucide-react';
-import clsx from 'clsx';
 import Avatar from '@/components/Avatar';
-import AvatarStack from '@/components/AvatarStack';
-import { members, initialTasks, sessionNotes, SQUAD_NAME } from '@/lib/mock';
-import type { Task } from '@/types';
-import styles from './LiveSession.module.css';
+import { SESSION_NOTES, SESSION_TASKS, SQUAD } from '@/data/mock';
+import {
+  Mic, MicOff, Video, VideoOff, Monitor, PhoneOff,
+  CheckCircle2, Circle, FileText, ListChecks,
+} from 'lucide-react';
 
 export default function LiveSession() {
   const navigate = useNavigate();
-  const [micOn, setMicOn] = useState<boolean>(true);
-  const [camOn, setCamOn] = useState<boolean>(true);
-  const [sharing, setSharing] = useState<boolean>(false);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [notes, setNotes] = useState<string>(sessionNotes);
-  const [showRate, setShowRate] = useState<boolean>(false);
-  const [rated, setRated] = useState<number>(0);
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
+  const [sharing, setSharing] = useState(false);
+  const [tasks, setTasks] = useState(SESSION_TASKS);
+  const [note, setNote] = useState('');
+  const [notes, setNotes] = useState(SESSION_NOTES);
 
   const toggleTask = (id: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    setTasks(t => t.map(task => task.id === id ? { ...task, done: !task.done } : task));
   };
 
-  const handleLeave = () => {
-    setShowRate(true);
+  const addNote = () => {
+    const trimmed = note.trim();
+    if (trimmed) {
+      setNotes(n => [...n, trimmed]);
+      setNote('');
+    }
   };
-
-  const submitRating = () => {
-    setShowRate(false);
-    navigate('/dashboard');
-  };
-
-  const speaker = members[0];
-  const others = members.slice(1);
 
   return (
-    <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.headLeft}>
-          <div className={styles.liveBadge}>
-            <Radio size={13} />
-            <span>LIVE</span>
-          </div>
-          <div>
-            <div className={styles.squadName}>{SQUAD_NAME}</div>
-            <div className={styles.sessionMeta}>Session 12 · Points dashboard pairing</div>
-          </div>
+    <div style={s.root}>
+      {/* Top bar */}
+      <div style={s.topBar}>
+        <div style={s.topBarLeft}>
+          <span style={s.liveDot} />
+          <span style={s.liveLabel}>LIVE</span>
+          <span style={s.sessionTitle}>Lumio SaaS — Session #7</span>
         </div>
-        <div className={styles.headRight}>
-          <div className={styles.viewers}>
-            <Users size={14} />
-            <span>{members.length} in room</span>
-          </div>
-          <AvatarStack members={members} size={28} />
-        </div>
-      </header>
-
-      <section className={styles.stage}>
-        <div className={styles.speaker}>
-          <div className={styles.speakerInner}>
-            {camOn ? (
-              <>
-                <div
-                  className={styles.speakerAvatar}
-                  style={{
-                    background: `radial-gradient(circle at 30% 25%, ${speaker.color}cc, ${speaker.color}55 50%, transparent 70%)`,
-                  }}
-                >
-                  <Avatar initials={speaker.initials} color={speaker.color} size={120} />
-                </div>
-                <div className={styles.speakerLabel}>
-                  <span className={styles.speakerName}>{speaker.name}</span>
-                  <span className={styles.speakerRole}>Squad leader · speaking</span>
-                </div>
-                {sharing && (
-                  <div className={styles.sharingPill}>
-                    <MonitorUp size={13} />
-                    Sharing screen
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className={styles.camOff}>
-                <VideoOff size={28} />
-                <span>Camera off</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.tiles}>
-          {others.map((m) => (
-            <div key={m.id} className={styles.tile}>
-              <Avatar initials={m.initials} color={m.color} size={48} />
-              <div className={styles.tileName}>{m.name.split(' ')[0]}</div>
-              <div className={styles.micIcon}>
-                <Mic size={12} />
-              </div>
+        <div style={s.memberPile}>
+          {SQUAD.members.slice(0, 4).map(m => (
+            <div key={m.id} title={m.name}>
+              <Avatar initials={m.avatar} color={m.color} size={28} />
             </div>
           ))}
+          <span style={{ fontSize: 12, color: '#7a8fad', marginLeft: 6 }}>4 in session</span>
         </div>
-      </section>
+      </div>
 
-      <section className={styles.splitView}>
-        <div className={styles.notes}>
-          <div className={styles.panelHead}>
-            <div className={styles.panelTitle}>
-              <MessageSquare size={15} />
-              Shared notes
+      {/* Video area */}
+      <div style={s.videoArea}>
+        <div style={s.videoGrid}>
+          {/* Main presenter */}
+          <div style={s.videoMain}>
+            <div style={s.videoPlaceholder}>
+              <Avatar initials="JB" color="#a78bfa" size={64} />
+              <span style={s.videoName}>Jordan Blake · Squad leader</span>
+              {sharing && (
+                <div style={s.sharingBadge}><Monitor size={12} /> Sharing screen</div>
+              )}
             </div>
-            <span className={styles.panelHint}>Synced live</span>
           </div>
-          <textarea
-            className={styles.notesArea}
-            value={notes}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
-            spellCheck={false}
-          />
-        </div>
-
-        <div className={styles.checklist}>
-          <div className={styles.panelHead}>
-            <div className={styles.panelTitle}>
-              <CheckCircle2 size={15} />
-              Live tasks
-            </div>
-            <span className={styles.panelHint}>
-              {tasks.filter((t) => t.done).length} / {tasks.length} done
-            </span>
-          </div>
-          <div className={styles.taskList}>
-            {tasks.map((task) => (
-              <button
-                key={task.id}
-                className={clsx(styles.task, task.done && styles.taskDone)}
-                onClick={() => toggleTask(task.id)}
-              >
-                {task.done ? (
-                  <CheckCircle2 size={17} className={styles.taskIconDone} />
-                ) : (
-                  <Circle size={17} className={styles.taskIcon} />
-                )}
-                <span>{task.title}</span>
-              </button>
+          {/* Side tiles */}
+          <div style={s.videoSide}>
+            {SQUAD.members.slice(0, 3).map(m => (
+              <div key={m.id} style={s.videoTile}>
+                <Avatar initials={m.avatar} color={m.color} size={36} />
+                <span style={s.tileLabel}>{m.name.split(' ')[0]}</span>
+              </div>
             ))}
           </div>
         </div>
-      </section>
-
-      <div className={styles.controlBar}>
-        <div className={styles.controlGroup}>
-          <ControlButton
-            active={micOn}
-            onClick={() => setMicOn((v) => !v)}
-            label={micOn ? 'Mute' : 'Unmute'}
-            icon={micOn ? <Mic size={18} /> : <MicOff size={18} />}
-          />
-          <ControlButton
-            active={camOn}
-            onClick={() => setCamOn((v) => !v)}
-            label={camOn ? 'Stop video' : 'Start video'}
-            icon={camOn ? <Video size={18} /> : <VideoOff size={18} />}
-          />
-          <ControlButton
-            active={sharing}
-            onClick={() => setSharing((v) => !v)}
-            label={sharing ? 'Stop sharing' : 'Share screen'}
-            icon={<MonitorUp size={18} />}
-            accent
-          />
-        </div>
-
-        <button className={styles.leaveBtn} onClick={handleLeave}>
-          <PhoneOff size={16} />
-          Leave session
-        </button>
       </div>
 
-      {showRate && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitle}>Rate this session</h2>
-            <p className={styles.modalSub}>
-              Your rating updates the squad's score and unlocks your leader's payout.
-            </p>
-            <div className={styles.stars}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  className={clsx(styles.star, n <= rated && styles.starActive)}
-                  onClick={() => setRated(n)}
-                  aria-label={`${n} star`}
-                >
-                  <Star size={28} fill={n <= rated ? '#ffb547' : 'none'} stroke={n <= rated ? '#ffb547' : '#6b7185'} />
-                </button>
-              ))}
-            </div>
-            <div className={styles.modalActions}>
-              <button className={styles.modalGhost} onClick={() => navigate('/dashboard')}>
-                Skip
-              </button>
-              <button
-                className={styles.modalPrimary}
-                onClick={submitRating}
-                disabled={rated === 0}
-              >
-                Submit & leave
-              </button>
-            </div>
+      {/* Content area */}
+      <div style={s.contentArea}>
+        {/* Notes */}
+        <div style={s.panel}>
+          <div style={s.panelHeader}>
+            <FileText size={14} color="#5b8af0" />
+            <span>Shared Notes</span>
+          </div>
+          <div style={s.notesList}>
+            {notes.map((n, i) => (
+              <div key={i} style={s.noteItem}>
+                <span style={s.noteBullet}>·</span>
+                <span style={{ fontSize: 14, color: '#c5d0e6', lineHeight: 1.55 }}>{n}</span>
+              </div>
+            ))}
+          </div>
+          <div style={s.noteInput}>
+            <input
+              placeholder="Add a note…"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addNote()}
+              style={s.input}
+              onFocus={e => (e.currentTarget.style.borderColor = '#5b8af0')}
+              onBlur={e => (e.currentTarget.style.borderColor = '#1e2d45')}
+            />
+            <button onClick={addNote} style={s.addBtn}>Add</button>
           </div>
         </div>
-      )}
+
+        {/* Tasks */}
+        <div style={s.panel}>
+          <div style={s.panelHeader}>
+            <ListChecks size={14} color="#7c5bf0" />
+            <span>Live Task Checklist</span>
+          </div>
+          <div style={s.tasksList}>
+            {tasks.map(task => (
+              <button
+                key={task.id}
+                onClick={() => toggleTask(task.id)}
+                style={{
+                  ...s.taskItem,
+                  background: task.done ? 'rgba(52,211,153,0.04)' : 'transparent',
+                }}
+              >
+                {task.done
+                  ? <CheckCircle2 size={16} color="#34d399" style={{ flexShrink: 0 }} />
+                  : <Circle size={16} color="#3d5270" style={{ flexShrink: 0 }} />}
+                <span style={{
+                  fontSize: 14,
+                  color: task.done ? '#7a8fad' : '#e8edf7',
+                  textDecoration: task.done ? 'line-through' : 'none',
+                  textAlign: 'left',
+                }}>
+                  {task.label}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div style={s.taskSummary}>
+            {tasks.filter(t => t.done).length} of {tasks.length} tasks done
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={s.bottomBar}>
+        <div style={s.controls}>
+          <CtrlBtn
+            active={micOn}
+            color="#5b8af0"
+            label={micOn ? 'Mute' : 'Unmute'}
+            onClick={() => setMicOn(v => !v)}
+          >
+            {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+          </CtrlBtn>
+          <CtrlBtn
+            active={camOn}
+            color="#5b8af0"
+            label={camOn ? 'Stop video' : 'Start video'}
+            onClick={() => setCamOn(v => !v)}
+          >
+            {camOn ? <Video size={18} /> : <VideoOff size={18} />}
+          </CtrlBtn>
+          <CtrlBtn
+            active={sharing}
+            color="#7c5bf0"
+            label={sharing ? 'Stop share' : 'Share screen'}
+            onClick={() => setSharing(v => !v)}
+          >
+            <Monitor size={18} />
+          </CtrlBtn>
+        </div>
+
+        <button
+          style={s.leaveBtn}
+          onClick={() => navigate('/dashboard')}
+          onMouseEnter={e => (e.currentTarget.style.background = '#d94f4f')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#f87171')}
+        >
+          <PhoneOff size={16} /> Leave session
+        </button>
+      </div>
     </div>
   );
 }
 
-type ControlButtonProps = {
+function CtrlBtn({
+  children, active, color, label, onClick,
+}: {
+  children: React.ReactNode;
   active: boolean;
-  onClick: () => void;
+  color: string;
   label: string;
-  icon: React.ReactNode;
-  accent?: boolean;
-};
-
-function ControlButton({ active, onClick, label, icon, accent = false }: ControlButtonProps) {
+  onClick: () => void;
+}) {
+  const [hov, setHov] = useState(false);
   return (
     <button
-      className={clsx(
-        styles.ctrl,
-        active && !accent && styles.ctrlOn,
-        active && accent && styles.ctrlAccent,
-        !active && styles.ctrlOff
-      )}
       onClick={onClick}
       title={label}
-      aria-label={label}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+        padding: '10px 18px',
+        borderRadius: 10,
+        background: active ? (hov ? color + '28' : color + '18') : (hov ? '#1e2d45' : '#141d2e'),
+        border: `1px solid ${active ? color + '55' : '#1e2d45'}`,
+        color: active ? color : '#7a8fad',
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+        minWidth: 72,
+      }}
     >
-      {icon}
+      {children}
+      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.04em' }}>{label}</span>
     </button>
   );
 }
+
+const s: Record<string, React.CSSProperties> = {
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    background: '#080c14',
+    overflow: 'hidden',
+  },
+  topBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 24px',
+    background: '#0b1120',
+    borderBottom: '1px solid #162035',
+    flexShrink: 0,
+  },
+  topBarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    background: '#f87171',
+    boxShadow: '0 0 8px #f87171',
+    animation: 'none',
+  },
+  liveLabel: {
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: '0.1em',
+    color: '#f87171',
+  },
+  sessionTitle: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: '#e8edf7',
+  },
+  memberPile: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+  },
+  videoArea: {
+    height: '36vh',
+    flexShrink: 0,
+    background: '#06090f',
+    borderBottom: '1px solid #162035',
+    padding: '12px 16px',
+  },
+  videoGrid: {
+    display: 'flex',
+    height: '100%',
+    gap: 10,
+  },
+  videoMain: {
+    flex: 1,
+  },
+  videoPlaceholder: {
+    height: '100%',
+    background: '#0b1120',
+    border: '1px solid #1e2d45',
+    borderRadius: 14,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    position: 'relative',
+  },
+  videoName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#7a8fad',
+  },
+  sharingBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    background: 'rgba(124,91,240,0.2)',
+    border: '1px solid rgba(124,91,240,0.4)',
+    borderRadius: 6,
+    padding: '3px 10px',
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#a78bfa',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+  },
+  videoSide: {
+    width: 110,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  videoTile: {
+    flex: 1,
+    background: '#0b1120',
+    border: '1px solid #1e2d45',
+    borderRadius: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  tileLabel: {
+    fontSize: 11,
+    color: '#7a8fad',
+    fontWeight: 600,
+  },
+  contentArea: {
+    flex: 1,
+    display: 'flex',
+    overflow: 'hidden',
+    gap: 0,
+  },
+  panel: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '18px 20px',
+    borderRight: '1px solid #162035',
+    overflow: 'hidden',
+  },
+  panelHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#e8edf7',
+    marginBottom: 14,
+    letterSpacing: '-0.01em',
+  },
+  notesList: {
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    marginBottom: 12,
+  },
+  noteItem: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  noteBullet: {
+    color: '#5b8af0',
+    fontWeight: 800,
+    fontSize: 18,
+    lineHeight: 1.3,
+    flexShrink: 0,
+  },
+  noteInput: {
+    display: 'flex',
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    background: '#0b1120',
+    border: '1.5px solid #1e2d45',
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontSize: 13,
+    color: '#e8edf7',
+    transition: 'border-color 0.15s',
+  },
+  addBtn: {
+    padding: '8px 14px',
+    background: 'rgba(91,138,240,0.15)',
+    border: '1px solid rgba(91,138,240,0.3)',
+    borderRadius: 8,
+    color: '#5b8af0',
+    fontWeight: 700,
+    fontSize: 13,
+    cursor: 'pointer',
+  },
+  tasksList: {
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  taskItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '9px 10px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.12s',
+    width: '100%',
+  },
+  taskSummary: {
+    fontSize: 12,
+    color: '#3d5270',
+    fontWeight: 600,
+    marginTop: 12,
+    padding: '8px 0 0',
+    borderTop: '1px solid #162035',
+  },
+  bottomBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 24px',
+    background: '#0b1120',
+    borderTop: '1px solid #162035',
+    flexShrink: 0,
+  },
+  controls: {
+    display: 'flex',
+    gap: 10,
+  },
+  leaveBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 20px',
+    background: '#f87171',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: 14,
+    borderRadius: 10,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.15s',
+  },
+};

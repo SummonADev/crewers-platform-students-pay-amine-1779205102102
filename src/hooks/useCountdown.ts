@@ -1,30 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export type Countdown = {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  totalMs: number;
-};
-
-export function useCountdown(target: Date): Countdown {
-  const compute = (): Countdown => {
-    const diff = Math.max(0, target.getTime() - Date.now());
-    const days = Math.floor(diff / 86_400_000);
-    const hours = Math.floor((diff % 86_400_000) / 3_600_000);
-    const minutes = Math.floor((diff % 3_600_000) / 60_000);
-    const seconds = Math.floor((diff % 60_000) / 1000);
-    return { days, hours, minutes, seconds, totalMs: diff };
+export function useCountdown(targetDate: Date) {
+  const calc = () => {
+    const diff = Math.max(0, targetDate.getTime() - Date.now());
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return { h, m, s, done: diff === 0 };
   };
 
-  const [state, setState] = useState<Countdown>(compute);
+  const [time, setTime] = useState(calc);
 
   useEffect(() => {
-    const id = setInterval(() => setState(compute()), 1000);
+    const id = setInterval(() => setTime(calc()), 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target.getTime()]);
+  }, [targetDate]);
 
-  return state;
+  return time;
 }

@@ -1,18 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }],
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
-  }
+  "references": [{ "path": "./tsconfig.app.json" }]
 }

@@ -1,24 +1,30 @@
-import styles from './Avatar.module.css';
+import React from 'react';
 
-type AvatarProps = {
+interface AvatarProps {
   initials: string;
-  color: string;
+  color?: string;
   size?: number;
   ring?: boolean;
-  title?: string;
-};
+}
 
-export default function Avatar({ initials, color, size = 36, ring = false, title }: AvatarProps) {
+export default function Avatar({ initials, color = '#5b8af0', size = 36, ring = false }: AvatarProps) {
   return (
     <div
-      className={styles.avatar}
-      title={title}
       style={{
         width: size,
         height: size,
-        background: `linear-gradient(135deg, ${color} 0%, ${color}99 100%)`,
-        fontSize: Math.round(size * 0.38),
-        boxShadow: ring ? `0 0 0 2px var(--bg-elev-1), 0 0 0 4px ${color}55` : undefined,
+        borderRadius: '50%',
+        background: color + '28',
+        border: ring ? `2px solid ${color}` : `2px solid #0f1623`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: size * 0.35,
+        fontWeight: 700,
+        color: color,
+        flexShrink: 0,
+        letterSpacing: '-0.02em',
+        userSelect: 'none',
       }}
     >
       {initials}

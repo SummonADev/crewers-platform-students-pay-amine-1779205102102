@@ -1,28 +1,25 @@
-import type { Member } from '@/types';
+import React from 'react';
 import Avatar from './Avatar';
-import styles from './AvatarStack.module.css';
 
-type AvatarStackProps = {
-  members: Member[];
-  max?: number;
-  size?: number;
-};
+interface Member {
+  id: string;
+  name: string;
+  avatar: string;
+  color: string;
+}
 
-export default function AvatarStack({ members, max = 6, size = 34 }: AvatarStackProps) {
-  const shown = members.slice(0, max);
-  const extra = members.length - shown.length;
+export default function AvatarStack({ members, size = 36 }: { members: Member[]; size?: number }) {
   return (
-    <div className={styles.stack}>
-      {shown.map((m) => (
-        <div key={m.id} className={styles.item}>
-          <Avatar initials={m.initials} color={m.color} size={size} ring title={m.name} />
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {members.map((m, i) => (
+        <div
+          key={m.id}
+          title={m.name}
+          style={{ marginLeft: i === 0 ? 0 : -(size * 0.28), zIndex: members.length - i }}
+        >
+          <Avatar initials={m.avatar} color={m.color} size={size} />
         </div>
       ))}
-      {extra > 0 && (
-        <div className={styles.more} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}>
-          +{extra}
-        </div>
-      )}
     </div>
   );
 }
