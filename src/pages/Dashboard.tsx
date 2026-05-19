@@ -196,7 +196,7 @@ export default function Dashboard() {
             }}
             onClick={() => setRsvped((v) => !v)}
           >
-            {rsvped ? '✓ RSVP'd' : 'RSVP'}
+            {rsvped ? '✓ RSVPd' : 'RSVP'}
           </button>
         </div>
 
