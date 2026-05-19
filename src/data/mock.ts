@@ -33,7 +33,7 @@ export const ACTIVITY = [
   { id: 'a1', who: 'Jordan Blake',  action: 'pushed a commit',          time: '3 min ago',  color: '#a78bfa' },
   { id: 'a2', who: 'Emma Rossi',    action: 'completed "Features grid"', time: '18 min ago', color: '#5b8af0' },
   { id: 'a3', who: 'Carlos Vega',   action: 'left a note in the doc',   time: '42 min ago', color: '#7c5bf0' },
-  { id: 'a4', who: 'Aiko Tanaka',   action: 'RSVP'd to next session',   time: '1 hr ago',   color: '#34d399' },
+  { id: 'a4', who: 'Aiko Tanaka',   action: 'RSVP\'d to next session',  time: '1 hr ago',   color: '#34d399' },
   { id: 'a5', who: 'Jordan Blake',  action: 'updated the task list',     time: '2 hrs ago',  color: '#a78bfa' },
 ];
 
