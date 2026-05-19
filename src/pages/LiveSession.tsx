@@ -1,218 +1,231 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Avatar from '@/components/Avatar';
-import { SESSION_NOTES, SESSION_TASKS, SQUAD } from '@/data/mock';
-import {
-  Mic, MicOff, Video, VideoOff, Monitor, PhoneOff,
-  CheckCircle2, Circle, FileText, ListChecks,
-} from 'lucide-react';
+
+const CHECKLIST = [
+  { id: 1, label: 'Review PR #14 — auth flow', done: true },
+  { id: 2, label: 'Walk through component library', done: true },
+  { id: 3, label: 'Fix mobile nav bug', done: false },
+  { id: 4, label: 'Deploy staging environment', done: false },
+  { id: 5, label: 'Client feedback round', done: false },
+];
+
+const INITIAL_NOTES = `## Sprint Review — Session Notes
+
+**Attendees:** Emma, Maya, Tom, Sara, Jake
+
+### What we shipped
+- Auth flow with OAuth (Google, GitHub)
+- Token-based design system with 40+ components
+- Responsive layout foundation
+
+### Blockers
+- Mobile nav animation glitch on iOS Safari
+- Staging env missing env vars
+
+### Action items
+- [ ] Emma → fix Safari bug by Thursday
+- [ ] Tom → add missing env vars to staging
+- [ ] All → review client Figma feedback
+`;
+
+const MEMBERS = [
+  { initials: 'EL', color: '#5b8af0', name: 'Emma L.', role: 'Student' },
+  { initials: 'MK', color: '#7c5bf0', name: 'Maya K.', role: 'Leader' },
+  { initials: 'TL', color: '#34d399', name: 'Tom L.', role: 'Student' },
+  { initials: 'SR', color: '#fbbf24', name: 'Sara R.', role: 'Student' },
+];
 
 export default function LiveSession() {
   const navigate = useNavigate();
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
-  const [sharing, setSharing] = useState(false);
-  const [tasks, setTasks] = useState(SESSION_TASKS);
-  const [note, setNote] = useState('');
-  const [notes, setNotes] = useState(SESSION_NOTES);
+  const [checklist, setChecklist] = useState(CHECKLIST);
+  const [notes, setNotes] = useState(INITIAL_NOTES);
+  const [mic, setMic] = useState(true);
+  const [cam, setCam] = useState(true);
+  const [screen, setScreen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [rated, setRated] = useState(false);
 
-  const toggleTask = (id: string) => {
-    setTasks(t => t.map(task => task.id === id ? { ...task, done: !task.done } : task));
-  };
+  function toggleCheck(id: number) {
+    setChecklist((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  }
 
-  const addNote = () => {
-    const trimmed = note.trim();
-    if (trimmed) {
-      setNotes(n => [...n, trimmed]);
-      setNote('');
+  function handleLeave() {
+    if (!rated) {
+      const r = window.prompt('Rate this session (1–5):');
+      if (r) setRated(true);
     }
-  };
+    navigate('/dashboard');
+  }
 
   return (
     <div style={s.root}>
       {/* Top bar */}
-      <div style={s.topBar}>
-        <div style={s.topBarLeft}>
-          <span style={s.liveDot} />
-          <span style={s.liveLabel}>LIVE</span>
-          <span style={s.sessionTitle}>Lumio SaaS — Session #7</span>
+      <header style={s.topBar}>
+        <div style={s.topLeft}>
+          <span style={{ fontSize: '18px', color: '#5b8af0' }}>⬡</span>
+          <span style={s.topTitle}>PixelCrew</span>
+          <span style={s.sessionBadge}>🔴 Live</span>
         </div>
-        <div style={s.memberPile}>
-          {SQUAD.members.slice(0, 4).map(m => (
-            <div key={m.id} title={m.name}>
-              <Avatar initials={m.avatar} color={m.color} size={28} />
+        <div style={s.topRight}>
+          {MEMBERS.map((m) => (
+            <div key={m.initials} title={`${m.name} · ${m.role}`} style={{ ...s.topAvatar, background: m.color }}>
+              {m.initials}
             </div>
           ))}
-          <span style={{ fontSize: 12, color: '#7a8fad', marginLeft: 6 }}>4 in session</span>
+          <span style={{ fontSize: '13px', color: '#7a8fad', marginLeft: '4px' }}>4 in session</span>
         </div>
-      </div>
+      </header>
 
       {/* Video area */}
-      <div style={s.videoArea}>
+      <section style={s.videoArea}>
         <div style={s.videoGrid}>
-          {/* Main presenter */}
-          <div style={s.videoMain}>
-            <div style={s.videoPlaceholder}>
-              <Avatar initials="JB" color="#a78bfa" size={64} />
-              <span style={s.videoName}>Jordan Blake · Squad leader</span>
-              {sharing && (
-                <div style={s.sharingBadge}><Monitor size={12} /> Sharing screen</div>
+          {MEMBERS.map((m, i) => (
+            <div key={m.initials} style={s.videoTile}>
+              <div style={{ ...s.videoAvatar, background: m.color }}>{m.initials}</div>
+              <div style={s.videoName}>{m.name}</div>
+              {m.role === 'Leader' && <div style={s.leaderTag}>Leader</div>}
+              {i === 0 && !cam && (
+                <div style={s.camOff}>Cam off</div>
               )}
             </div>
-          </div>
-          {/* Side tiles */}
-          <div style={s.videoSide}>
-            {SQUAD.members.slice(0, 3).map(m => (
-              <div key={m.id} style={s.videoTile}>
-                <Avatar initials={m.avatar} color={m.color} size={36} />
-                <span style={s.tileLabel}>{m.name.split(' ')[0]}</span>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Content area */}
-      <div style={s.contentArea}>
+      {/* Bottom split */}
+      <section style={s.splitArea}>
         {/* Notes */}
-        <div style={s.panel}>
+        <div style={s.notesPanel}>
           <div style={s.panelHeader}>
-            <FileText size={14} color="#5b8af0" />
-            <span>Shared Notes</span>
+            <span style={s.panelIcon}>📝</span>
+            <span style={s.panelTitle}>Shared Notes</span>
+            <span style={s.liveDot} />
+            <span style={{ fontSize: '11px', color: '#34d399' }}>Live sync</span>
           </div>
-          <div style={s.notesList}>
-            {notes.map((n, i) => (
-              <div key={i} style={s.noteItem}>
-                <span style={s.noteBullet}>·</span>
-                <span style={{ fontSize: 14, color: '#c5d0e6', lineHeight: 1.55 }}>{n}</span>
+          <textarea
+            style={s.textarea}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            spellCheck={false}
+          />
+        </div>
+
+        {/* Checklist */}
+        <div style={s.checkPanel}>
+          <div style={s.panelHeader}>
+            <span style={s.panelIcon}>✅</span>
+            <span style={s.panelTitle}>Session Tasks</span>
+            <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#7a8fad' }}>
+              {checklist.filter((t) => t.done).length}/{checklist.length} done
+            </span>
+          </div>
+          <div style={s.checkList}>
+            {checklist.map((task) => (
+              <div
+                key={task.id}
+                style={s.checkItem}
+                onClick={() => toggleCheck(task.id)}
+              >
+                <div style={{
+                  ...s.checkBox,
+                  ...(task.done ? s.checkBoxDone : {}),
+                }}>
+                  {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>✓</span>}
+                </div>
+                <span style={{
+                  ...s.checkLabel,
+                  ...(task.done ? s.checkLabelDone : {}),
+                }}>{task.label}</span>
               </div>
             ))}
           </div>
-          <div style={s.noteInput}>
-            <input
-              placeholder="Add a note…"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addNote()}
-              style={s.input}
-              onFocus={e => (e.currentTarget.style.borderColor = '#5b8af0')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#1e2d45')}
-            />
-            <button onClick={addNote} style={s.addBtn}>Add</button>
-          </div>
-        </div>
 
-        {/* Tasks */}
-        <div style={s.panel}>
-          <div style={s.panelHeader}>
-            <ListChecks size={14} color="#7c5bf0" />
-            <span>Live Task Checklist</span>
-          </div>
-          <div style={s.tasksList}>
-            {tasks.map(task => (
-              <button
-                key={task.id}
-                onClick={() => toggleTask(task.id)}
-                style={{
-                  ...s.taskItem,
-                  background: task.done ? 'rgba(52,211,153,0.04)' : 'transparent',
-                }}
-              >
-                {task.done
-                  ? <CheckCircle2 size={16} color="#34d399" style={{ flexShrink: 0 }} />
-                  : <Circle size={16} color="#3d5270" style={{ flexShrink: 0 }} />}
-                <span style={{
-                  fontSize: 14,
-                  color: task.done ? '#7a8fad' : '#e8edf7',
-                  textDecoration: task.done ? 'line-through' : 'none',
-                  textAlign: 'left',
-                }}>
-                  {task.label}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div style={s.taskSummary}>
-            {tasks.filter(t => t.done).length} of {tasks.length} tasks done
-          </div>
+          {/* Rating */}
+          {!rated && (
+            <div style={s.ratingBox}>
+              <div style={{ fontSize: '12px', color: '#7a8fad', marginBottom: '8px' }}>Rate this session</div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => { setRating(star); setRated(true); }}
+                    style={{
+                      ...s.starBtn,
+                      color: star <= rating ? '#fbbf24' : '#3d5270',
+                    }}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {rated && (
+            <div style={s.ratedMsg}>Thanks for rating! Squad score updated ★</div>
+          )}
         </div>
-      </div>
+      </section>
 
-      {/* Bottom bar */}
-      <div style={s.bottomBar}>
+      {/* Control bar */}
+      <footer style={s.controlBar}>
         <div style={s.controls}>
-          <CtrlBtn
-            active={micOn}
-            color="#5b8af0"
-            label={micOn ? 'Mute' : 'Unmute'}
-            onClick={() => setMicOn(v => !v)}
-          >
-            {micOn ? <Mic size={18} /> : <MicOff size={18} />}
-          </CtrlBtn>
-          <CtrlBtn
-            active={camOn}
-            color="#5b8af0"
-            label={camOn ? 'Stop video' : 'Start video'}
-            onClick={() => setCamOn(v => !v)}
-          >
-            {camOn ? <Video size={18} /> : <VideoOff size={18} />}
-          </CtrlBtn>
-          <CtrlBtn
-            active={sharing}
-            color="#7c5bf0"
-            label={sharing ? 'Stop share' : 'Share screen'}
-            onClick={() => setSharing(v => !v)}
-          >
-            <Monitor size={18} />
-          </CtrlBtn>
+          <ControlBtn
+            active={mic}
+            onClick={() => setMic(!mic)}
+            icon={mic ? '🎙️' : '🔇'}
+            label={mic ? 'Mute' : 'Unmute'}
+          />
+          <ControlBtn
+            active={cam}
+            onClick={() => setCam(!cam)}
+            icon={cam ? '📹' : '📷'}
+            label={cam ? 'Stop Cam' : 'Start Cam'}
+          />
+          <ControlBtn
+            active={screen}
+            onClick={() => setScreen(!screen)}
+            icon={'🖥️'}
+            label={screen ? 'Stop Share' : 'Share Screen'}
+          />
         </div>
-
-        <button
-          style={s.leaveBtn}
-          onClick={() => navigate('/dashboard')}
-          onMouseEnter={e => (e.currentTarget.style.background = '#d94f4f')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#f87171')}
-        >
-          <PhoneOff size={16} /> Leave session
+        <button style={s.leaveBtn} onClick={handleLeave}>
+          Leave Session
         </button>
-      </div>
+      </footer>
     </div>
   );
 }
 
-function CtrlBtn({
-  children, active, color, label, onClick,
+function ControlBtn({
+  active,
+  onClick,
+  icon,
+  label,
 }: {
-  children: React.ReactNode;
   active: boolean;
-  color: string;
-  label: string;
   onClick: () => void;
+  icon: string;
+  label: string;
 }) {
-  const [hov, setHov] = useState(false);
   return (
     <button
       onClick={onClick}
-      title={label}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 4,
+        gap: '4px',
+        background: active ? 'rgba(91,138,240,0.12)' : 'rgba(255,255,255,0.04)',
+        border: active ? '1.5px solid rgba(91,138,240,0.35)' : '1.5px solid #1e2d45',
+        borderRadius: '12px',
         padding: '10px 18px',
-        borderRadius: 10,
-        background: active ? (hov ? color + '28' : color + '18') : (hov ? '#1e2d45' : '#141d2e'),
-        border: `1px solid ${active ? color + '55' : '#1e2d45'}`,
-        color: active ? color : '#7a8fad',
         cursor: 'pointer',
-        transition: 'all 0.15s',
-        minWidth: 72,
+        transition: 'background 0.15s',
+        color: '#e8edf7',
       }}
     >
-      {children}
-      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.04em' }}>{label}</span>
+      <span style={{ fontSize: '18px' }}>{icon}</span>
+      <span style={{ fontSize: '11px', color: '#7a8fad', fontWeight: 500 }}>{label}</span>
     </button>
   );
 }
@@ -230,226 +243,258 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 24px',
+    borderBottom: '1px solid #1e2d45',
     background: '#0b1120',
-    borderBottom: '1px solid #162035',
     flexShrink: 0,
   },
-  topBarLeft: {
+  topLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
+    gap: '10px',
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    background: '#f87171',
-    boxShadow: '0 0 8px #f87171',
-    animation: 'none',
+  topTitle: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: '#e8edf7',
   },
-  liveLabel: {
-    fontSize: 11,
-    fontWeight: 800,
-    letterSpacing: '0.1em',
+  sessionBadge: {
+    fontSize: '12px',
+    fontWeight: 600,
+    background: 'rgba(248,113,113,0.12)',
     color: '#f87171',
+    padding: '3px 8px',
+    borderRadius: '99px',
+    border: '1px solid rgba(248,113,113,0.25)',
   },
-  sessionTitle: {
-    fontSize: 15,
+  topRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
+  topAvatar: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '10px',
+    fontWeight: 700,
+    color: '#fff',
+    marginLeft: '-4px',
+    border: '2px solid #0b1120',
+    flexShrink: 0,
+  },
+  videoArea: {
+    flexShrink: 0,
+    height: '35vh',
+    background: '#05080f',
+    borderBottom: '1px solid #1e2d45',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '16px',
+  },
+  videoGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '12px',
+    width: '100%',
+    height: '100%',
+    maxWidth: '1100px',
+  },
+  videoTile: {
+    background: '#0f1623',
+    border: '1px solid #1e2d45',
+    borderRadius: '14px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  videoAvatar: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px',
+    fontWeight: 700,
+    color: '#fff',
+  },
+  videoName: {
+    fontSize: '12px',
     fontWeight: 600,
     color: '#e8edf7',
   },
-  memberPile: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-  },
-  videoArea: {
-    height: '36vh',
-    flexShrink: 0,
-    background: '#06090f',
-    borderBottom: '1px solid #162035',
-    padding: '12px 16px',
-  },
-  videoGrid: {
-    display: 'flex',
-    height: '100%',
-    gap: 10,
-  },
-  videoMain: {
-    flex: 1,
-  },
-  videoPlaceholder: {
-    height: '100%',
-    background: '#0b1120',
-    border: '1px solid #1e2d45',
-    borderRadius: 14,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    position: 'relative',
-  },
-  videoName: {
-    fontSize: 14,
-    fontWeight: 600,
-    color: '#7a8fad',
-  },
-  sharingBadge: {
+  leaderTag: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    background: 'rgba(124,91,240,0.2)',
-    border: '1px solid rgba(124,91,240,0.4)',
-    borderRadius: 6,
-    padding: '3px 10px',
-    fontSize: 11,
-    fontWeight: 700,
-    color: '#a78bfa',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-  },
-  videoSide: {
-    width: 110,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  videoTile: {
-    flex: 1,
-    background: '#0b1120',
-    border: '1px solid #1e2d45',
-    borderRadius: 10,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  tileLabel: {
-    fontSize: 11,
-    color: '#7a8fad',
+    top: '8px',
+    right: '8px',
+    fontSize: '10px',
     fontWeight: 600,
+    background: 'rgba(91,138,240,0.18)',
+    color: '#5b8af0',
+    padding: '2px 7px',
+    borderRadius: '99px',
+    border: '1px solid rgba(91,138,240,0.3)',
   },
-  contentArea: {
+  camOff: {
+    position: 'absolute',
+    bottom: '8px',
+    left: '8px',
+    fontSize: '10px',
+    color: '#f87171',
+    background: 'rgba(248,113,113,0.1)',
+    padding: '2px 7px',
+    borderRadius: '99px',
+    border: '1px solid rgba(248,113,113,0.2)',
+  },
+  splitArea: {
     flex: 1,
     display: 'flex',
     overflow: 'hidden',
-    gap: 0,
+    minHeight: 0,
   },
-  panel: {
+  notesPanel: {
     flex: 1,
+    borderRight: '1px solid #1e2d45',
     display: 'flex',
     flexDirection: 'column',
-    padding: '18px 20px',
-    borderRight: '1px solid #162035',
     overflow: 'hidden',
+  },
+  checkPanel: {
+    width: '360px',
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    padding: '16px 20px',
   },
   panelHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    fontSize: 13,
-    fontWeight: 700,
-    color: '#e8edf7',
-    marginBottom: 14,
-    letterSpacing: '-0.01em',
-  },
-  notesList: {
-    flex: 1,
-    overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    marginBottom: 12,
-  },
-  noteItem: {
-    display: 'flex',
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  noteBullet: {
-    color: '#5b8af0',
-    fontWeight: 800,
-    fontSize: 18,
-    lineHeight: 1.3,
+    gap: '8px',
+    padding: '14px 20px',
+    borderBottom: '1px solid #1e2d45',
     flexShrink: 0,
   },
-  noteInput: {
-    display: 'flex',
-    gap: 8,
+  panelIcon: {
+    fontSize: '15px',
   },
-  input: {
-    flex: 1,
-    background: '#0b1120',
-    border: '1.5px solid #1e2d45',
-    borderRadius: 8,
-    padding: '8px 12px',
-    fontSize: 13,
-    color: '#e8edf7',
-    transition: 'border-color 0.15s',
-  },
-  addBtn: {
-    padding: '8px 14px',
-    background: 'rgba(91,138,240,0.15)',
-    border: '1px solid rgba(91,138,240,0.3)',
-    borderRadius: 8,
-    color: '#5b8af0',
+  panelTitle: {
+    fontSize: '13px',
     fontWeight: 700,
-    fontSize: 13,
-    cursor: 'pointer',
+    color: '#e8edf7',
   },
-  tasksList: {
+  liveDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    background: '#34d399',
+    marginLeft: '2px',
+  },
+  textarea: {
     flex: 1,
-    overflowY: 'auto',
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: '#e8edf7',
+    fontSize: '13px',
+    lineHeight: 1.7,
+    padding: '16px 20px',
+    resize: 'none',
+    fontFamily: 'monospace',
+    overflow: 'auto',
+  },
+  checkList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: '10px',
+    marginTop: '12px',
+    flex: 1,
+    overflow: 'auto',
   },
-  taskItem: {
+  checkItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    padding: '9px 10px',
-    borderRadius: 8,
-    border: 'none',
+    gap: '10px',
     cursor: 'pointer',
-    transition: 'background 0.12s',
-    width: '100%',
+    padding: '6px 0',
   },
-  taskSummary: {
-    fontSize: 12,
+  checkBox: {
+    width: '20px',
+    height: '20px',
+    borderRadius: '6px',
+    border: '1.5px solid #1e2d45',
+    background: 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  checkBoxDone: {
+    background: '#5b8af0',
+    borderColor: '#5b8af0',
+  },
+  checkLabel: {
+    fontSize: '13px',
+    color: '#e8edf7',
+  },
+  checkLabelDone: {
     color: '#3d5270',
-    fontWeight: 600,
-    marginTop: 12,
-    padding: '8px 0 0',
-    borderTop: '1px solid #162035',
+    textDecoration: 'line-through',
   },
-  bottomBar: {
+  ratingBox: {
+    marginTop: '20px',
+    padding: '14px',
+    background: '#0f1623',
+    border: '1px solid #1e2d45',
+    borderRadius: '12px',
+  },
+  starBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '22px',
+    cursor: 'pointer',
+    padding: '0 2px',
+    transition: 'color 0.15s',
+  },
+  ratedMsg: {
+    marginTop: '20px',
+    padding: '12px 14px',
+    background: 'rgba(52,211,153,0.08)',
+    border: '1px solid rgba(52,211,153,0.2)',
+    borderRadius: '10px',
+    fontSize: '13px',
+    color: '#34d399',
+    fontWeight: 600,
+  },
+  controlBar: {
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 24px',
+    padding: '14px 28px',
+    borderTop: '1px solid #1e2d45',
     background: '#0b1120',
-    borderTop: '1px solid #162035',
-    flexShrink: 0,
   },
   controls: {
     display: 'flex',
-    gap: 10,
+    gap: '10px',
   },
   leaveBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '10px 20px',
-    background: '#f87171',
-    color: '#fff',
+    background: 'rgba(248,113,113,0.12)',
+    border: '1.5px solid rgba(248,113,113,0.3)',
+    borderRadius: '10px',
+    padding: '10px 22px',
+    fontSize: '14px',
     fontWeight: 700,
-    fontSize: 14,
-    borderRadius: 10,
-    border: 'none',
+    color: '#f87171',
     cursor: 'pointer',
     transition: 'background 0.15s',
   },
