@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CHECKLIST = [
-  { id: 1, label: 'Review PR #14 — auth flow', done: true },
+  { id: 1, label: 'Review PR #14 - auth flow', done: true },
   { id: 2, label: 'Walk through component library', done: true },
   { id: 3, label: 'Fix mobile nav bug', done: false },
   { id: 4, label: 'Deploy staging environment', done: false },
   { id: 5, label: 'Client feedback round', done: false },
 ];
 
-const INITIAL_NOTES = `## Sprint Review — Session Notes
+const INITIAL_NOTES = `## Sprint Review - Session Notes
 
 **Attendees:** Emma, Maya, Tom, Sara, Jake
 
@@ -23,9 +23,9 @@ const INITIAL_NOTES = `## Sprint Review — Session Notes
 - Staging env missing env vars
 
 ### Action items
-- [ ] Emma → fix Safari bug by Thursday
-- [ ] Tom → add missing env vars to staging
-- [ ] All → review client Figma feedback
+- [ ] Emma: fix Safari bug by Thursday
+- [ ] Tom: add missing env vars to staging
+- [ ] All: review client Figma feedback
 `;
 
 const MEMBERS = [
@@ -50,10 +50,6 @@ export default function LiveSession() {
   }
 
   function handleLeave() {
-    if (!rated) {
-      const r = window.prompt('Rate this session (1–5):');
-      if (r) setRated(true);
-    }
     navigate('/dashboard');
   }
 
@@ -62,13 +58,13 @@ export default function LiveSession() {
       {/* Top bar */}
       <header style={s.topBar}>
         <div style={s.topLeft}>
-          <span style={{ fontSize: '18px', color: '#5b8af0' }}>⬡</span>
+          <span style={{ fontSize: '18px', color: '#5b8af0' }}>&#x2B21;</span>
           <span style={s.topTitle}>PixelCrew</span>
-          <span style={s.sessionBadge}>🔴 Live</span>
+          <span style={s.sessionBadge}>&#x1F534; Live</span>
         </div>
         <div style={s.topRight}>
           {MEMBERS.map((m) => (
-            <div key={m.initials} title={`${m.name} · ${m.role}`} style={{ ...s.topAvatar, background: m.color }}>
+            <div key={m.initials} title={`${m.name} - ${m.role}`} style={{ ...s.topAvatar, background: m.color }}>
               {m.initials}
             </div>
           ))}
@@ -97,7 +93,7 @@ export default function LiveSession() {
         {/* Notes */}
         <div style={s.notesPanel}>
           <div style={s.panelHeader}>
-            <span style={s.panelIcon}>📝</span>
+            <span style={s.panelIcon}>&#x1F4DD;</span>
             <span style={s.panelTitle}>Shared Notes</span>
             <span style={s.liveDot} />
             <span style={{ fontSize: '11px', color: '#34d399' }}>Live sync</span>
@@ -113,7 +109,7 @@ export default function LiveSession() {
         {/* Checklist */}
         <div style={s.checkPanel}>
           <div style={s.panelHeader}>
-            <span style={s.panelIcon}>✅</span>
+            <span style={s.panelIcon}>&#x2705;</span>
             <span style={s.panelTitle}>Session Tasks</span>
             <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#7a8fad' }}>
               {checklist.filter((t) => t.done).length}/{checklist.length} done
@@ -130,7 +126,7 @@ export default function LiveSession() {
                   ...s.checkBox,
                   ...(task.done ? s.checkBoxDone : {}),
                 }}>
-                  {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>✓</span>}
+                  {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>&#x2713;</span>}
                 </div>
                 <span style={{
                   ...s.checkLabel,
@@ -154,14 +150,14 @@ export default function LiveSession() {
                       color: star <= rating ? '#fbbf24' : '#3d5270',
                     }}
                   >
-                    ★
+                    &#9733;
                   </button>
                 ))}
               </div>
             </div>
           )}
           {rated && (
-            <div style={s.ratedMsg}>Thanks for rating! Squad score updated ★</div>
+            <div style={s.ratedMsg}>Thanks for rating! Squad score updated &#9733;</div>
           )}
         </div>
       </section>
@@ -172,19 +168,19 @@ export default function LiveSession() {
           <ControlBtn
             active={mic}
             onClick={() => setMic(!mic)}
-            icon={mic ? '🎙️' : '🔇'}
+            icon={mic ? '\uD83C\uDF99\uFE0F' : '\uD83D\uDD07'}
             label={mic ? 'Mute' : 'Unmute'}
           />
           <ControlBtn
             active={cam}
             onClick={() => setCam(!cam)}
-            icon={cam ? '📹' : '📷'}
+            icon={cam ? '\uD83D\uDCF9' : '\uD83D\uDCF7'}
             label={cam ? 'Stop Cam' : 'Start Cam'}
           />
           <ControlBtn
             active={screen}
             onClick={() => setScreen(!screen)}
-            icon={'🖥️'}
+            icon={'\uD83D\uDDA5\uFE0F'}
             label={screen ? 'Stop Share' : 'Share Screen'}
           />
         </div>

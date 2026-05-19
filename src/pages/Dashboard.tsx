@@ -12,7 +12,7 @@ const TASKS = [
 const ACTIVITY = [
   { id: 1, avatar: 'MK', name: 'Maya K.', action: 'marked task done', detail: 'Design system tokens', time: '2m ago', color: '#5b8af0' },
   { id: 2, avatar: 'TL', name: 'Tom L.', action: 'pushed a commit', detail: 'feat: add avatar component', time: '14m ago', color: '#7c5bf0' },
-  { id: 3, avatar: 'SR', name: 'Sara R.', action: 'RSVP'd to session', detail: 'Thursday 7pm UTC', time: '1h ago', color: '#34d399' },
+  { id: 3, avatar: 'SR', name: 'Sara R.', action: 'RSVP to session', detail: 'Thursday 7pm UTC', time: '1h ago', color: '#34d399' },
   { id: 4, avatar: 'JD', name: 'Jake D.', action: 'left a comment', detail: 'Great work on the tokens!', time: '2h ago', color: '#fbbf24' },
 ];
 
@@ -32,15 +32,15 @@ function useCountdown(targetHours: number) {
   }, []);
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  const sec = seconds % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
 const NAV_ITEMS = [
-  { icon: '⬡', label: 'Squad' },
-  { icon: '📅', label: 'Sessions' },
-  { icon: '💼', label: 'Project' },
-  { icon: '💳', label: 'Billing' },
+  { icon: '\u2B21', label: 'Squad' },
+  { icon: '\uD83D\uDCC5', label: 'Sessions' },
+  { icon: '\uD83D\uDCBC', label: 'Project' },
+  { icon: '\uD83D\uDCB3', label: 'Billing' },
 ];
 
 export default function Dashboard() {
@@ -61,7 +61,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside style={s.sidebar}>
         <div style={s.sidebarLogo}>
-          <span style={{ fontSize: '20px', color: '#5b8af0' }}>⬡</span>
+          <span style={{ fontSize: '20px', color: '#5b8af0' }}>&#x2B21;</span>
           <span style={s.logoText}>Crewers</span>
         </div>
         <nav style={s.nav}>
@@ -93,7 +93,7 @@ export default function Dashboard() {
         {/* Header */}
         <header style={s.header}>
           <div>
-            <div style={s.squadName}>⚡ PixelCrew</div>
+            <div style={s.squadName}>&#x26A1; PixelCrew</div>
             <div style={s.squadMeta}>
               <div style={s.memberStack}>
                 {MEMBERS.map((m) => (
@@ -106,9 +106,9 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <span style={s.metaSep}>·</span>
-              <span style={s.rating}>★ 4.9</span>
-              <span style={s.metaSep}>·</span>
+              <span style={s.metaSep}>&#xB7;</span>
+              <span style={s.rating}>&#9733; 4.9</span>
+              <span style={s.metaSep}>&#xB7;</span>
               <span style={{ fontSize: '13px', color: '#7a8fad' }}>5 members</span>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function Dashboard() {
                 <div>
                   <div style={s.cardLabel}>CURRENT PROJECT</div>
                   <div style={s.cardTitle}>Luminary SaaS Dashboard</div>
-                  <div style={s.cardClient}>Client: Luminary Inc. · Sprint 2 of 4</div>
+                  <div style={s.cardClient}>Client: Luminary Inc. &middot; Sprint 2 of 4</div>
                 </div>
                 <span style={s.sprintBadge}>In Progress</span>
               </div>
@@ -152,7 +152,7 @@ export default function Dashboard() {
                       ...s.taskCheck,
                       ...(task.done ? s.taskCheckDone : {}),
                     }}>
-                      {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>✓</span>}
+                      {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>&#x2713;</span>}
                     </div>
                     <span style={{
                       ...s.taskLabel,
@@ -186,15 +186,15 @@ export default function Dashboard() {
           <aside style={s.rightPanel}>
             <div style={s.sessionCard}>
               <div style={s.sessionLabel}>NEXT LIVE SESSION</div>
-              <div style={s.sessionTitle}>Sprint Review & Code Walk</div>
-              <div style={s.sessionDate}>Thursday · 7:00 PM UTC</div>
+              <div style={s.sessionTitle}>Sprint Review &amp; Code Walk</div>
+              <div style={s.sessionDate}>Thursday &middot; 7:00 PM UTC</div>
               <div style={s.countdown}>{countdown}</div>
-              <div style={s.countdownSub}>hours · mins · secs</div>
+              <div style={s.countdownSub}>hours &middot; mins &middot; secs</div>
               <button
                 style={s.joinBtn}
                 onClick={() => navigate('/session')}
               >
-                Join Session →
+                Join Session &#x2192;
               </button>
               <div style={s.rsvpRow}>
                 <span style={{ fontSize: '12px', color: '#7a8fad' }}>Attending:</span>
@@ -215,7 +215,7 @@ export default function Dashboard() {
                 {[
                   { label: 'Sessions completed', value: '8' },
                   { label: 'Tasks shipped', value: '34' },
-                  { label: 'Avg. session rating', value: '4.9 ★' },
+                  { label: 'Avg. session rating', value: '4.9 \u2605' },
                   { label: 'Revenue generated', value: '$2,400' },
                 ].map((stat) => (
                   <div key={stat.label} style={s.statRow}>
@@ -314,9 +314,8 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
   },
   header: {
-    padding: '28px 32px 0',
+    padding: '28px 32px 20px',
     borderBottom: '1px solid #1e2d45',
-    paddingBottom: '20px',
   },
   squadName: {
     fontSize: '22px',

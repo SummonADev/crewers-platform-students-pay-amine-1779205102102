@@ -1,52 +1,29 @@
-@import url('https://rsms.me/inter/inter.css');
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-:root {
-  --bg-base: #080c14;
-  --bg-card: #0f1623;
-  --bg-card-hover: #141d2e;
-  --bg-sidebar: #0b1120;
-  --border: #1e2d45;
-  --border-subtle: #162035;
-  --accent: #5b8af0;
-  --accent-violet: #7c5bf0;
-  --accent-glow: rgba(91,138,240,0.18);
-  --text-primary: #e8edf7;
-  --text-secondary: #7a8fad;
-  --text-muted: #3d5270;
-  --green: #34d399;
-  --amber: #fbbf24;
-  --red: #f87171;
-  --radius: 14px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 32px rgba(0,0,0,0.45);
-  --shadow-card: 0 2px 16px rgba(0,0,0,0.35);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-feature-settings: 'cv02','cv03','cv04','cv11';
-}
-
 html, body, #root {
   height: 100%;
-  background: var(--bg-base);
-  color: var(--text-primary);
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #080c14;
+  color: #e8edf7;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button {
   font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
 }
 
-input {
+input, textarea {
   font-family: inherit;
-  outline: none;
+  box-sizing: border-box;
 }
 
 a {
@@ -55,12 +32,19 @@ a {
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: #1e2d45;
   border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d4060;
 }

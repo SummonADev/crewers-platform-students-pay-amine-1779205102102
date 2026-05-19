@@ -28,7 +28,7 @@ export default function SignUp() {
       <div style={styles.card}>
         {/* Logo */}
         <div style={styles.logo}>
-          <span style={styles.logoMark}>⬡</span>
+          <span style={styles.logoMark}>&#x2B21;</span>
           <span style={styles.logoText}>Crewers</span>
         </div>
 
@@ -39,14 +39,14 @@ export default function SignUp() {
         <div style={styles.roleRow}>
           {(['student', 'freelancer'] as Role[]).map((r) => (
             <button
-              key={r}
+              key={r as string}
               onClick={() => setRole(r)}
               style={{
                 ...styles.roleCard,
                 ...(role === r ? styles.roleCardActive : {}),
               }}
             >
-              <span style={styles.roleIcon}>{r === 'student' ? '🎓' : '⚡'}</span>
+              <span style={styles.roleIcon}>{r === 'student' ? '\uD83C\uDF93' : '\u26A1'}</span>
               <span style={styles.roleTitle}>
                 {r === 'student' ? "I'm a student" : "I'm a freelancer"}
               </span>
