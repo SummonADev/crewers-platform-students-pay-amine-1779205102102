@@ -1,237 +1,221 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '@/components/Avatar';
+import Logo from '@/components/Logo';
+import { members, sessionNotes, initialTasks } from '@/lib/mock';
+import type { Task } from '@/types';
 
-const CHECKLIST = [
-  { id: 1, label: 'Review PR #14 - auth flow', done: true },
-  { id: 2, label: 'Walk through component library', done: true },
-  { id: 3, label: 'Fix mobile nav bug', done: false },
-  { id: 4, label: 'Deploy staging environment', done: false },
-  { id: 5, label: 'Client feedback round', done: false },
-];
-
-const INITIAL_NOTES = `## Sprint Review - Session Notes
-
-**Attendees:** Emma, Maya, Tom, Sara, Jake
-
-### What we shipped
-- Auth flow with OAuth (Google, GitHub)
-- Token-based design system with 40+ components
-- Responsive layout foundation
-
-### Blockers
-- Mobile nav animation glitch on iOS Safari
-- Staging env missing env vars
-
-### Action items
-- [ ] Emma: fix Safari bug by Thursday
-- [ ] Tom: add missing env vars to staging
-- [ ] All: review client Figma feedback
-`;
-
-const MEMBERS = [
-  { initials: 'EL', color: '#5b8af0', name: 'Emma L.', role: 'Student' },
-  { initials: 'MK', color: '#7c5bf0', name: 'Maya K.', role: 'Leader' },
-  { initials: 'TL', color: '#34d399', name: 'Tom L.', role: 'Student' },
-  { initials: 'SR', color: '#fbbf24', name: 'Sara R.', role: 'Student' },
-];
+type MediaState = {
+  mic: boolean;
+  camera: boolean;
+  screen: boolean;
+};
 
 export default function LiveSession() {
   const navigate = useNavigate();
-  const [checklist, setChecklist] = useState(CHECKLIST);
-  const [notes, setNotes] = useState(INITIAL_NOTES);
-  const [mic, setMic] = useState(true);
-  const [cam, setCam] = useState(true);
-  const [screen, setScreen] = useState(false);
+  const [media, setMedia] = useState<MediaState>({ mic: true, camera: true, screen: false });
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [notes, setNotes] = useState(sessionNotes);
   const [rating, setRating] = useState(0);
   const [rated, setRated] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
-  function toggleCheck(id: number) {
-    setChecklist((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  function toggleMedia(key: keyof MediaState) {
+    setMedia((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function toggleTask(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
   }
 
   function handleLeave() {
-    navigate('/dashboard');
+    setLeaving(true);
+    setTimeout(() => navigate('/dashboard'), 700);
+  }
+
+  function handleRate(star: number) {
+    setRating(star);
+    setRated(true);
   }
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
       {/* Top bar */}
-      <header style={s.topBar}>
-        <div style={s.topLeft}>
-          <span style={{ fontSize: '18px', color: '#5b8af0' }}>&#x2B21;</span>
-          <span style={s.topTitle}>PixelCrew</span>
-          <span style={s.sessionBadge}>&#x1F534; Live</span>
+      <div style={styles.topBar}>
+        <Logo size={22} />
+        <div style={styles.topBarCenter}>
+          <span style={styles.liveDot} />
+          <span style={styles.liveLabel}>LIVE</span>
+          <span style={styles.sessionName}>Session 13 — Points Dashboard</span>
         </div>
-        <div style={s.topRight}>
-          {MEMBERS.map((m) => (
-            <div key={m.initials} title={`${m.name} - ${m.role}`} style={{ ...s.topAvatar, background: m.color }}>
-              {m.initials}
-            </div>
+        <div style={styles.topBarRight}>
+          {members.slice(0, 4).map((m) => (
+            <Avatar key={m.id} initials={m.initials} color={m.color} size={28} title={m.name} />
           ))}
-          <span style={{ fontSize: '13px', color: '#7a8fad', marginLeft: '4px' }}>4 in session</span>
         </div>
-      </header>
+      </div>
 
       {/* Video area */}
-      <section style={s.videoArea}>
-        <div style={s.videoGrid}>
-          {MEMBERS.map((m, i) => (
-            <div key={m.initials} style={s.videoTile}>
-              <div style={{ ...s.videoAvatar, background: m.color }}>{m.initials}</div>
-              <div style={s.videoName}>{m.name}</div>
-              {m.role === 'Leader' && <div style={s.leaderTag}>Leader</div>}
-              {i === 0 && !cam && (
-                <div style={s.camOff}>Cam off</div>
-              )}
+      <div style={styles.videoArea}>
+        <div style={styles.videoGrid}>
+          {/* Main video (screen share placeholder) */}
+          <div style={styles.mainVideo}>
+            <div style={styles.screenSharePlaceholder}>
+              <div style={styles.screenShareIcon}>🖥️</div>
+              <div style={styles.screenShareText}>Liam's screen</div>
+              <div style={styles.screenShareSub}>Screen sharing active</div>
             </div>
-          ))}
+          </div>
+          {/* Participant thumbnails */}
+          <div style={styles.participants}>
+            {members.map((m) => (
+              <div key={m.id} style={styles.participantThumb}>
+                <div style={{ ...styles.participantVideo, background: m.color + '18' }}>
+                  <Avatar initials={m.initials} color={m.color} size={40} />
+                </div>
+                <span style={styles.participantName}>{m.name.split(' ')[0]}</span>
+                {m.role === 'lead' && <span style={styles.leadBadge}>Lead</span>}
+              </div>
+            ))}
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Bottom split */}
-      <section style={s.splitArea}>
-        {/* Notes */}
-        <div style={s.notesPanel}>
-          <div style={s.panelHeader}>
-            <span style={s.panelIcon}>&#x1F4DD;</span>
-            <span style={s.panelTitle}>Shared Notes</span>
-            <span style={s.liveDot} />
-            <span style={{ fontSize: '11px', color: '#34d399' }}>Live sync</span>
+      {/* Bottom content */}
+      <div style={styles.bottomContent}>
+        {/* Shared notes */}
+        <div style={styles.notesPanel}>
+          <div style={styles.panelHeader}>
+            <span style={styles.panelIcon}>📝</span>
+            <h4 style={styles.panelTitle}>Shared Notes</h4>
+            <span style={styles.editHint}>editing</span>
           </div>
           <textarea
-            style={s.textarea}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            style={styles.notesTextarea}
             spellCheck={false}
           />
         </div>
 
-        {/* Checklist */}
-        <div style={s.checkPanel}>
-          <div style={s.panelHeader}>
-            <span style={s.panelIcon}>&#x2705;</span>
-            <span style={s.panelTitle}>Session Tasks</span>
-            <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#7a8fad' }}>
-              {checklist.filter((t) => t.done).length}/{checklist.length} done
+        {/* Task checklist */}
+        <div style={styles.tasksPanel}>
+          <div style={styles.panelHeader}>
+            <span style={styles.panelIcon}>✅</span>
+            <h4 style={styles.panelTitle}>Live Tasks</h4>
+            <span style={styles.taskCount}>
+              {tasks.filter((t) => t.done).length}/{tasks.length} done
             </span>
           </div>
-          <div style={s.checkList}>
-            {checklist.map((task) => (
+          <div style={styles.taskList}>
+            {tasks.map((task) => (
               <div
                 key={task.id}
-                style={s.checkItem}
-                onClick={() => toggleCheck(task.id)}
+                style={styles.taskRow}
+                onClick={() => toggleTask(task.id)}
               >
                 <div style={{
-                  ...s.checkBox,
-                  ...(task.done ? s.checkBoxDone : {}),
+                  ...styles.taskCheck,
+                  ...(task.done ? styles.taskCheckDone : {}),
                 }}>
-                  {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>&#x2713;</span>}
+                  {task.done && <span style={{ fontSize: 10 }}>✓</span>}
                 </div>
                 <span style={{
-                  ...s.checkLabel,
-                  ...(task.done ? s.checkLabelDone : {}),
-                }}>{task.label}</span>
+                  ...styles.taskTitle,
+                  ...(task.done ? styles.taskTitleDone : {}),
+                }}>
+                  {task.title}
+                </span>
               </div>
             ))}
           </div>
 
           {/* Rating */}
-          {!rated && (
-            <div style={s.ratingBox}>
-              <div style={{ fontSize: '12px', color: '#7a8fad', marginBottom: '8px' }}>Rate this session</div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {[1, 2, 3, 4, 5].map((star) => (
+          {!rated ? (
+            <div style={styles.ratingBlock}>
+              <span style={styles.ratingLabel}>Rate this session</span>
+              <div style={styles.stars}>
+                {[1, 2, 3, 4, 5].map((s) => (
                   <button
-                    key={star}
-                    onClick={() => { setRating(star); setRated(true); }}
-                    style={{
-                      ...s.starBtn,
-                      color: star <= rating ? '#fbbf24' : '#3d5270',
-                    }}
+                    key={s}
+                    onClick={() => handleRate(s)}
+                    style={styles.starBtn}
                   >
-                    &#9733;
+                    {s <= rating ? '⭐' : '☆'}
                   </button>
                 ))}
               </div>
             </div>
-          )}
-          {rated && (
-            <div style={s.ratedMsg}>Thanks for rating! Squad score updated &#9733;</div>
+          ) : (
+            <div style={styles.ratingThanks}>
+              ⭐ Thanks for rating! Squad score updated.
+            </div>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* Control bar */}
-      <footer style={s.controlBar}>
-        <div style={s.controls}>
-          <ControlBtn
-            active={mic}
-            onClick={() => setMic(!mic)}
-            icon={mic ? '\uD83C\uDF99\uFE0F' : '\uD83D\uDD07'}
-            label={mic ? 'Mute' : 'Unmute'}
-          />
-          <ControlBtn
-            active={cam}
-            onClick={() => setCam(!cam)}
-            icon={cam ? '\uD83D\uDCF9' : '\uD83D\uDCF7'}
-            label={cam ? 'Stop Cam' : 'Start Cam'}
-          />
-          <ControlBtn
-            active={screen}
-            onClick={() => setScreen(!screen)}
-            icon={'\uD83D\uDDA5\uFE0F'}
-            label={screen ? 'Stop Share' : 'Share Screen'}
-          />
+      {/* Bottom control bar */}
+      <div style={styles.controlBar}>
+        <div style={styles.controls}>
+          <button
+            style={{
+              ...styles.controlBtn,
+              ...(media.mic ? styles.controlBtnActive : styles.controlBtnOff),
+            }}
+            onClick={() => toggleMedia('mic')}
+          >
+            <span style={styles.controlIcon}>{media.mic ? '🎙️' : '🔇'}</span>
+            <span style={styles.controlLabel}>{media.mic ? 'Mute' : 'Unmute'}</span>
+          </button>
+
+          <button
+            style={{
+              ...styles.controlBtn,
+              ...(media.camera ? styles.controlBtnActive : styles.controlBtnOff),
+            }}
+            onClick={() => toggleMedia('camera')}
+          >
+            <span style={styles.controlIcon}>{media.camera ? '📹' : '📷'}</span>
+            <span style={styles.controlLabel}>{media.camera ? 'Stop Video' : 'Start Video'}</span>
+          </button>
+
+          <button
+            style={{
+              ...styles.controlBtn,
+              ...(media.screen ? styles.controlBtnActive : {}),
+            }}
+            onClick={() => toggleMedia('screen')}
+          >
+            <span style={styles.controlIcon}>🖥️</span>
+            <span style={styles.controlLabel}>{media.screen ? 'Stop Share' : 'Share Screen'}</span>
+          </button>
+
+          <button
+            style={{
+              ...styles.controlBtn,
+              ...styles.leaveBtn,
+              opacity: leaving ? 0.6 : 1,
+            }}
+            onClick={handleLeave}
+            disabled={leaving}
+          >
+            <span style={styles.controlIcon}>📴</span>
+            <span style={styles.controlLabel}>Leave</span>
+          </button>
         </div>
-        <button style={s.leaveBtn} onClick={handleLeave}>
-          Leave Session
-        </button>
-      </footer>
+      </div>
     </div>
   );
 }
 
-function ControlBtn({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: string;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        background: active ? 'rgba(91,138,240,0.12)' : 'rgba(255,255,255,0.04)',
-        border: active ? '1.5px solid rgba(91,138,240,0.35)' : '1.5px solid #1e2d45',
-        borderRadius: '12px',
-        padding: '10px 18px',
-        cursor: 'pointer',
-        transition: 'background 0.15s',
-        color: '#e8edf7',
-      }}
-    >
-      <span style={{ fontSize: '18px' }}>{icon}</span>
-      <span style={{ fontSize: '11px', color: '#7a8fad', fontWeight: 500 }}>{label}</span>
-    </button>
-  );
-}
-
-const s: Record<string, React.CSSProperties> = {
+const styles: Record<string, React.CSSProperties> = {
   root: {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
-    background: '#080c14',
+    background: 'var(--bg-base)',
     overflow: 'hidden',
   },
   topBar: {
@@ -239,144 +223,136 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 24px',
-    borderBottom: '1px solid #1e2d45',
-    background: '#0b1120',
+    background: 'var(--bg-surface)',
+    borderBottom: '1px solid var(--border)',
     flexShrink: 0,
   },
-  topLeft: {
+  topBarCenter: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
   },
-  topTitle: {
-    fontSize: '16px',
-    fontWeight: 700,
-    color: '#e8edf7',
-  },
-  sessionBadge: {
-    fontSize: '12px',
-    fontWeight: 600,
-    background: 'rgba(248,113,113,0.12)',
-    color: '#f87171',
-    padding: '3px 8px',
-    borderRadius: '99px',
-    border: '1px solid rgba(248,113,113,0.25)',
-  },
-  topRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-  },
-  topAvatar: {
-    width: '28px',
-    height: '28px',
+  liveDot: {
+    width: '8px',
+    height: '8px',
     borderRadius: '50%',
+    background: 'var(--red)',
+    boxShadow: '0 0 8px rgba(255,93,108,0.8)',
+    animation: 'pulse 1.5s infinite',
+  },
+  liveLabel: {
+    fontSize: '11px',
+    fontWeight: 800,
+    letterSpacing: '0.1em',
+    color: 'var(--red)',
+  },
+  sessionName: {
+    fontSize: '14px',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  },
+  topBarRight: {
     display: 'flex',
+    gap: '6px',
     alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '10px',
-    fontWeight: 700,
-    color: '#fff',
-    marginLeft: '-4px',
-    border: '2px solid #0b1120',
-    flexShrink: 0,
   },
   videoArea: {
-    flexShrink: 0,
-    height: '35vh',
-    background: '#05080f',
-    borderBottom: '1px solid #1e2d45',
+    flex: '0 0 50%',
+    background: '#050810',
+    borderBottom: '1px solid var(--border)',
+    overflow: 'hidden',
+  },
+  videoGrid: {
+    display: 'flex',
+    height: '100%',
+  },
+  mainVideo: {
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '16px',
+    background: 'linear-gradient(135deg, #0a0f1e 0%, #0d1428 100%)',
+    position: 'relative',
   },
-  videoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '12px',
-    width: '100%',
-    height: '100%',
-    maxWidth: '1100px',
-  },
-  videoTile: {
-    background: '#0f1623',
-    border: '1px solid #1e2d45',
-    borderRadius: '14px',
+  screenSharePlaceholder: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    position: 'relative',
-    overflow: 'hidden',
+    gap: '10px',
+    opacity: 0.7,
   },
-  videoAvatar: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
+  screenShareIcon: {
+    fontSize: '48px',
+  },
+  screenShareText: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+  },
+  screenShareSub: {
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
+  },
+  participants: {
+    width: '160px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    padding: '8px',
+    background: '#070b14',
+    overflowY: 'auto',
+  },
+  participantThumb: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    position: 'relative',
+  },
+  participantVideo: {
+    width: '100%',
+    aspectRatio: '16/9',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '16px',
+    border: '1px solid var(--border)',
+  },
+  participantName: {
+    fontSize: '11px',
+    color: 'var(--text-secondary)',
+    fontWeight: 500,
+  },
+  leadBadge: {
+    position: 'absolute',
+    top: '4px',
+    right: '4px',
+    fontSize: '9px',
     fontWeight: 700,
-    color: '#fff',
+    background: 'var(--accent)',
+    color: 'white',
+    padding: '1px 5px',
+    borderRadius: '3px',
   },
-  videoName: {
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#e8edf7',
-  },
-  leaderTag: {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    fontSize: '10px',
-    fontWeight: 600,
-    background: 'rgba(91,138,240,0.18)',
-    color: '#5b8af0',
-    padding: '2px 7px',
-    borderRadius: '99px',
-    border: '1px solid rgba(91,138,240,0.3)',
-  },
-  camOff: {
-    position: 'absolute',
-    bottom: '8px',
-    left: '8px',
-    fontSize: '10px',
-    color: '#f87171',
-    background: 'rgba(248,113,113,0.1)',
-    padding: '2px 7px',
-    borderRadius: '99px',
-    border: '1px solid rgba(248,113,113,0.2)',
-  },
-  splitArea: {
+  bottomContent: {
     flex: 1,
     display: 'flex',
     overflow: 'hidden',
-    minHeight: 0,
   },
   notesPanel: {
     flex: 1,
-    borderRight: '1px solid #1e2d45',
     display: 'flex',
     flexDirection: 'column',
+    borderRight: '1px solid var(--border)',
+    background: 'var(--bg-surface)',
     overflow: 'hidden',
-  },
-  checkPanel: {
-    width: '360px',
-    flexShrink: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    padding: '16px 20px',
   },
   panelHeader: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
     padding: '14px 20px',
-    borderBottom: '1px solid #1e2d45',
+    borderBottom: '1px solid var(--border)',
     flexShrink: 0,
   },
   panelIcon: {
@@ -385,113 +361,157 @@ const s: Record<string, React.CSSProperties> = {
   panelTitle: {
     fontSize: '13px',
     fontWeight: 700,
-    color: '#e8edf7',
+    color: 'var(--text-primary)',
+    flex: 1,
   },
-  liveDot: {
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    background: '#34d399',
-    marginLeft: '2px',
+  editHint: {
+    fontSize: '11px',
+    color: 'var(--green)',
+    fontWeight: 600,
   },
-  textarea: {
+  taskCount: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+  },
+  notesTextarea: {
     flex: 1,
     background: 'transparent',
     border: 'none',
-    outline: 'none',
-    color: '#e8edf7',
-    fontSize: '13px',
-    lineHeight: 1.7,
-    padding: '16px 20px',
     resize: 'none',
-    fontFamily: 'monospace',
-    overflow: 'auto',
+    padding: '16px 20px',
+    color: 'var(--text-secondary)',
+    fontSize: '13px',
+    lineHeight: 1.8,
+    fontFamily: 'inherit',
   },
-  checkList: {
+  tasksPanel: {
+    width: '320px',
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
-    marginTop: '12px',
-    flex: 1,
-    overflow: 'auto',
+    background: 'var(--bg-card)',
+    overflow: 'hidden',
   },
-  checkItem: {
+  taskList: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  taskRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    padding: '8px 10px',
+    borderRadius: 'var(--radius-sm)',
     cursor: 'pointer',
-    padding: '6px 0',
+    transition: 'background 0.12s',
   },
-  checkBox: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '6px',
-    border: '1.5px solid #1e2d45',
-    background: 'transparent',
+  taskCheck: {
+    width: '16px',
+    height: '16px',
+    borderRadius: '4px',
+    border: '1.5px solid var(--border-light)',
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+    transition: 'all 0.15s',
   },
-  checkBoxDone: {
-    background: '#5b8af0',
-    borderColor: '#5b8af0',
+  taskCheckDone: {
+    background: 'var(--accent)',
+    borderColor: 'var(--accent)',
+    color: 'white',
   },
-  checkLabel: {
+  taskTitle: {
     fontSize: '13px',
-    color: '#e8edf7',
+    color: 'var(--text-primary)',
+    lineHeight: 1.4,
   },
-  checkLabelDone: {
-    color: '#3d5270',
+  taskTitleDone: {
     textDecoration: 'line-through',
+    color: 'var(--text-muted)',
   },
-  ratingBox: {
-    marginTop: '20px',
-    padding: '14px',
-    background: '#0f1623',
-    border: '1px solid #1e2d45',
-    borderRadius: '12px',
+  ratingBlock: {
+    padding: '14px 12px',
+    borderTop: '1px solid var(--border)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  ratingLabel: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+  },
+  stars: {
+    display: 'flex',
+    gap: '4px',
   },
   starBtn: {
     background: 'none',
     border: 'none',
-    fontSize: '22px',
+    fontSize: '20px',
     cursor: 'pointer',
-    padding: '0 2px',
-    transition: 'color 0.15s',
+    padding: '2px',
+    transition: 'transform 0.1s',
   },
-  ratedMsg: {
-    marginTop: '20px',
-    padding: '12px 14px',
-    background: 'rgba(52,211,153,0.08)',
-    border: '1px solid rgba(52,211,153,0.2)',
-    borderRadius: '10px',
-    fontSize: '13px',
-    color: '#34d399',
+  ratingThanks: {
+    padding: '14px 12px',
+    borderTop: '1px solid var(--border)',
+    fontSize: '12px',
+    color: 'var(--green)',
     fontWeight: 600,
   },
   controlBar: {
     flexShrink: 0,
+    background: 'var(--bg-surface)',
+    borderTop: '1px solid var(--border)',
+    padding: '12px 24px',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '14px 28px',
-    borderTop: '1px solid #1e2d45',
-    background: '#0b1120',
+    justifyContent: 'center',
   },
   controls: {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  controlBtn: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '10px 18px',
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    minWidth: '80px',
+  },
+  controlBtnActive: {
+    borderColor: 'var(--accent)',
+    background: 'var(--accent-dim)',
+  },
+  controlBtnOff: {
+    borderColor: 'var(--red)',
+    background: 'rgba(255,93,108,0.08)',
+  },
+  controlIcon: {
+    fontSize: '20px',
+  },
+  controlLabel: {
+    fontSize: '11px',
+    fontWeight: 600,
   },
   leaveBtn: {
-    background: 'rgba(248,113,113,0.12)',
-    border: '1.5px solid rgba(248,113,113,0.3)',
-    borderRadius: '10px',
-    padding: '10px 22px',
-    fontSize: '14px',
-    fontWeight: 700,
-    color: '#f87171',
-    cursor: 'pointer',
-    transition: 'background 0.15s',
+    borderColor: 'var(--red)',
+    background: 'rgba(255,93,108,0.15)',
+    color: 'var(--red)',
+    marginLeft: '16px',
   },
 };

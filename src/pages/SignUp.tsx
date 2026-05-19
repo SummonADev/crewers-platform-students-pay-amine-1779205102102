@@ -1,108 +1,129 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Logo from '@/components/Logo';
+import type { Role } from '@/types';
 
-type Role = 'student' | 'freelancer' | null;
+const ROLES: { key: Role; emoji: string; title: string; desc: string }[] = [
+  {
+    key: 'student',
+    emoji: '🚀',
+    title: "I'm a Student",
+    desc: 'Join a squad, ship real client work, and level up your skills by actually building things.',
+  },
+  {
+    key: 'freelancer',
+    emoji: '⚡',
+    title: "I'm a Freelancer",
+    desc: 'Lead a crew, take on client projects, earn while you mentor the next generation of devs.',
+  },
+];
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role>(null);
+  const [role, setRole] = useState<Role>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hovered, setHovered] = useState<Role | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!role) return;
+    if (!email || !password) return;
     setLoading(true);
     setTimeout(() => {
+      setLoading(false);
       navigate('/dashboard');
     }, 900);
   }
 
   return (
     <div style={styles.root}>
-      {/* background blobs */}
-      <div style={styles.blob1} />
-      <div style={styles.blob2} />
+      {/* Gradient orbs */}
+      <div style={styles.orb1} />
+      <div style={styles.orb2} />
 
       <div style={styles.card}>
-        {/* Logo */}
-        <div style={styles.logo}>
-          <span style={styles.logoMark}>&#x2B21;</span>
-          <span style={styles.logoText}>Crewers</span>
+        <div style={styles.logoRow}>
+          <Logo size={32} />
         </div>
 
-        <h1 style={styles.hero}>Learn by shipping.<br />With a crew.</h1>
-        <p style={styles.sub}>Join a small squad, ship real client projects, grow fast.</p>
+        <div style={styles.hero}>
+          <h1 style={styles.heroTitle}>
+            Learn by shipping.<br />
+            <span style={styles.heroAccent}>With a crew.</span>
+          </h1>
+          <p style={styles.heroSub}>
+            Small squads. Real clients. Zero fluff.
+          </p>
+        </div>
 
-        {/* Role cards */}
+        {/* Role selector */}
         <div style={styles.roleRow}>
-          {(['student', 'freelancer'] as Role[]).map((r) => (
-            <button
-              key={r as string}
-              onClick={() => setRole(r)}
-              style={{
-                ...styles.roleCard,
-                ...(role === r ? styles.roleCardActive : {}),
-              }}
-            >
-              <span style={styles.roleIcon}>{r === 'student' ? '\uD83C\uDF93' : '\u26A1'}</span>
-              <span style={styles.roleTitle}>
-                {r === 'student' ? "I'm a student" : "I'm a freelancer"}
-              </span>
-              <span style={styles.roleDesc}>
-                {r === 'student'
-                  ? 'Pay to join a squad and learn by doing real work.'
-                  : 'Lead a squad, take on clients, earn while you teach.'}
-              </span>
-            </button>
-          ))}
+          {ROLES.map((r) => {
+            const isSelected = role === r.key;
+            const isHovered = hovered === r.key;
+            return (
+              <button
+                key={r.key}
+                onClick={() => setRole(r.key)}
+                onMouseEnter={() => setHovered(r.key)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  ...styles.roleCard,
+                  ...(isSelected ? styles.roleCardActive : {}),
+                  ...(isHovered && !isSelected ? styles.roleCardHover : {}),
+                  transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                }}
+              >
+                <span style={styles.roleEmoji}>{r.emoji}</span>
+                <span style={styles.roleTitle}>{r.title}</span>
+                <span style={styles.roleDesc}>{r.desc}</span>
+                {isSelected && <div style={styles.roleCheck}>✓</div>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
+          <div style={styles.fieldGroup}>
             <label style={styles.label}>Email</label>
             <input
               type="email"
-              required
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
-          <div style={styles.field}>
+          <div style={styles.fieldGroup}>
             <label style={styles.label}>Password</label>
             <input
               type="password"
-              required
-              placeholder="Min 8 characters"
+              placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
           <button
             type="submit"
-            disabled={!role || loading}
+            disabled={loading}
             style={{
-              ...styles.btn,
-              ...(!role || loading ? styles.btnDisabled : {}),
+              ...styles.submitBtn,
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? 'Joining...' : role === 'freelancer' ? 'Apply as Squad Leader' : 'Join a Squad'}
+            {loading ? 'Creating your account...' : `Join as ${role === 'student' ? 'Student' : 'Freelancer'} →`}
           </button>
         </form>
 
-        <p style={styles.footer}>
-          Already have an account?{' '}
-          <span
-            onClick={() => navigate('/dashboard')}
-            style={styles.link}
-          >
-            Sign in
-          </span>
+        <p style={styles.terms}>
+          By joining you agree to our{' '}
+          <span style={styles.link}>Terms of Service</span> and{' '}
+          <span style={styles.link}>Privacy Policy</span>.
         </p>
       </div>
     </div>
@@ -115,115 +136,132 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#080c14',
+    padding: '24px 16px',
     position: 'relative',
     overflow: 'hidden',
-    padding: '24px',
+    background: 'var(--bg-base)',
   },
-  blob1: {
+  orb1: {
     position: 'absolute',
-    top: '-160px',
-    left: '-160px',
-    width: '520px',
-    height: '520px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(91,138,240,0.18) 0%, transparent 70%)',
-    pointerEvents: 'none',
-  },
-  blob2: {
-    position: 'absolute',
-    bottom: '-120px',
-    right: '-120px',
+    top: '-120px',
+    left: '-80px',
     width: '480px',
     height: '480px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(124,91,240,0.15) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  orb2: {
+    position: 'absolute',
+    bottom: '-100px',
+    right: '-60px',
+    width: '400px',
+    height: '400px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   card: {
     position: 'relative',
     zIndex: 1,
-    background: '#0f1623',
-    border: '1px solid #1e2d45',
-    borderRadius: '20px',
-    padding: '48px 44px',
     width: '100%',
     maxWidth: '560px',
-    boxShadow: '0 4px 48px rgba(0,0,0,0.55)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '20px',
+    padding: '40px',
+    boxShadow: 'var(--shadow-lg)',
   },
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+  logoRow: {
     marginBottom: '32px',
   },
-  logoMark: {
-    fontSize: '22px',
-    color: '#5b8af0',
-  },
-  logoText: {
-    fontSize: '18px',
-    fontWeight: 700,
-    color: '#e8edf7',
-    letterSpacing: '-0.02em',
-  },
   hero: {
+    marginBottom: '32px',
+  },
+  heroTitle: {
     fontSize: '32px',
     fontWeight: 800,
-    lineHeight: 1.15,
+    lineHeight: 1.2,
     letterSpacing: '-0.03em',
-    color: '#e8edf7',
-    marginBottom: '10px',
+    marginBottom: '8px',
+    color: 'var(--text-primary)',
   },
-  sub: {
-    fontSize: '15px',
-    color: '#7a8fad',
-    marginBottom: '28px',
-    lineHeight: 1.5,
+  heroAccent: {
+    background: 'linear-gradient(90deg, #6366f1, #a78bfa)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  },
+  heroSub: {
+    fontSize: '16px',
+    color: 'var(--text-secondary)',
+    fontWeight: 400,
   },
   roleRow: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: '12px',
-    marginBottom: '24px',
+    marginBottom: '28px',
   },
   roleCard: {
-    background: '#080c14',
-    border: '1.5px solid #1e2d45',
-    borderRadius: '14px',
-    padding: '18px 16px',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: '6px',
+    padding: '20px',
+    background: 'var(--bg-card)',
+    border: '1.5px solid var(--border)',
+    borderRadius: 'var(--radius)',
     cursor: 'pointer',
-    transition: 'border-color 0.18s, background 0.18s',
     textAlign: 'left',
+    transition: 'all 0.18s ease',
   },
   roleCardActive: {
-    border: '1.5px solid #5b8af0',
-    background: 'rgba(91,138,240,0.08)',
+    borderColor: 'var(--accent)',
+    background: 'var(--accent-dim)',
+    boxShadow: '0 0 0 1px var(--accent), 0 4px 20px var(--accent-glow)',
   },
-  roleIcon: {
-    fontSize: '22px',
-    marginBottom: '2px',
+  roleCardHover: {
+    borderColor: 'var(--border-light)',
+    background: 'var(--bg-card-hover)',
+  },
+  roleEmoji: {
+    fontSize: '24px',
+    marginBottom: '4px',
   },
   roleTitle: {
-    fontSize: '14px',
+    fontSize: '15px',
     fontWeight: 700,
-    color: '#e8edf7',
+    color: 'var(--text-primary)',
   },
   roleDesc: {
     fontSize: '12px',
-    color: '#7a8fad',
-    lineHeight: 1.4,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5,
+  },
+  roleCheck: {
+    position: 'absolute',
+    top: '12px',
+    right: '12px',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    background: 'var(--accent)',
+    color: 'white',
+    fontSize: '11px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 700,
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '16px',
+    marginBottom: '20px',
   },
-  field: {
+  fieldGroup: {
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
@@ -231,43 +269,42 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: '13px',
     fontWeight: 600,
-    color: '#7a8fad',
+    color: 'var(--text-secondary)',
+    letterSpacing: '0.02em',
   },
   input: {
-    background: '#080c14',
-    border: '1.5px solid #1e2d45',
-    borderRadius: '10px',
-    padding: '11px 14px',
-    fontSize: '14px',
-    color: '#e8edf7',
     width: '100%',
-    transition: 'border-color 0.18s',
+    padding: '12px 16px',
+    background: 'var(--bg-card)',
+    border: '1.5px solid var(--border)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-primary)',
+    fontSize: '15px',
+    transition: 'border-color 0.15s',
   },
-  btn: {
-    marginTop: '6px',
-    background: 'linear-gradient(135deg, #5b8af0, #7c5bf0)',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '13px',
+  submitBtn: {
+    width: '100%',
+    padding: '14px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    color: 'white',
     fontSize: '15px',
     fontWeight: 700,
-    color: '#fff',
+    borderRadius: 'var(--radius-sm)',
+    border: 'none',
     cursor: 'pointer',
-    transition: 'opacity 0.18s',
+    letterSpacing: '0.01em',
+    marginTop: '4px',
+    transition: 'opacity 0.15s, transform 0.15s',
+    boxShadow: '0 4px 16px rgba(99,102,241,0.35)',
   },
-  btnDisabled: {
-    opacity: 0.45,
-    cursor: 'not-allowed',
-  },
-  footer: {
-    marginTop: '20px',
-    fontSize: '13px',
-    color: '#7a8fad',
+  terms: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
     textAlign: 'center',
+    lineHeight: 1.6,
   },
   link: {
-    color: '#5b8af0',
-    fontWeight: 600,
+    color: 'var(--accent-bright)',
     cursor: 'pointer',
   },
 };

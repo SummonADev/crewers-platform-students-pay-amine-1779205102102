@@ -26,7 +26,7 @@ export const activity: ActivityItem[] = [
   { id: 'a1', who: 'Liam Park', initials: 'LP', color: '#7c5cff', action: 'scheduled a session for Thursday 7:00 PM', time: '2h ago' },
   { id: 'a2', who: 'Emma Rossi', initials: 'ER', color: '#4ea1ff', action: 'pushed 3 commits to feature/points-dashboard', time: '4h ago' },
   { id: 'a3', who: 'Sofia Diaz', initials: 'SD', color: '#ffb547', action: 'opened PR #24 — Stripe checkout integration', time: '7h ago' },
-  { id: 'a4', who: 'Noah Kim', initials: 'NK', color: '#3ad29f', action: 'completed task “Design loyalty card data model”', time: '1d ago' },
+  { id: 'a4', who: 'Noah Kim', initials: 'NK', color: '#3ad29f', action: 'completed task "Design loyalty card data model"', time: '1d ago' },
   { id: 'a5', who: 'Acme Coffee', initials: 'AC', color: '#a8aec0', action: 'left feedback on the v0.2 prototype', time: '2d ago' },
 ];
 

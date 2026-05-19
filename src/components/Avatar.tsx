@@ -1,21 +1,20 @@
-import React from 'react';
-
-interface AvatarProps {
+type Props = {
   initials: string;
-  color?: string;
+  color: string;
   size?: number;
-  ring?: boolean;
-}
+  title?: string;
+};
 
-export default function Avatar({ initials, color = '#5b8af0', size = 36, ring = false }: AvatarProps) {
+export default function Avatar({ initials, color, size = 36, title }: Props) {
   return (
     <div
+      title={title}
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
-        background: color + '28',
-        border: ring ? `2px solid ${color}` : `2px solid #0f1623`,
+        background: color + '33',
+        border: `2px solid ${color}66`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -23,8 +22,7 @@ export default function Avatar({ initials, color = '#5b8af0', size = 36, ring = 
         fontWeight: 700,
         color: color,
         flexShrink: 0,
-        letterSpacing: '-0.02em',
-        userSelect: 'none',
+        letterSpacing: '0.02em',
       }}
     >
       {initials}

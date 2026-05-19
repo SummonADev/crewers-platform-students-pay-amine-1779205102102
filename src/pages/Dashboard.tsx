@@ -1,270 +1,249 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const TASKS = [
-  { id: 1, label: 'Set up project repo & CI pipeline', done: true },
-  { id: 2, label: 'Design system tokens & component library', done: true },
-  { id: 3, label: 'Auth flow (sign-up, login, OAuth)', done: false },
-  { id: 4, label: 'Dashboard layout & data wiring', done: false },
-  { id: 5, label: 'Client review call prep', done: false },
-];
-
-const ACTIVITY = [
-  { id: 1, avatar: 'MK', name: 'Maya K.', action: 'marked task done', detail: 'Design system tokens', time: '2m ago', color: '#5b8af0' },
-  { id: 2, avatar: 'TL', name: 'Tom L.', action: 'pushed a commit', detail: 'feat: add avatar component', time: '14m ago', color: '#7c5bf0' },
-  { id: 3, avatar: 'SR', name: 'Sara R.', action: 'RSVP to session', detail: 'Thursday 7pm UTC', time: '1h ago', color: '#34d399' },
-  { id: 4, avatar: 'JD', name: 'Jake D.', action: 'left a comment', detail: 'Great work on the tokens!', time: '2h ago', color: '#fbbf24' },
-];
-
-const MEMBERS = [
-  { initials: 'EL', color: '#5b8af0', name: 'Emma L.' },
-  { initials: 'MK', color: '#7c5bf0', name: 'Maya K.' },
-  { initials: 'TL', color: '#34d399', name: 'Tom L.' },
-  { initials: 'SR', color: '#fbbf24', name: 'Sara R.' },
-  { initials: 'JD', color: '#f87171', name: 'Jake D.' },
-];
-
-function useCountdown(targetHours: number) {
-  const [seconds, setSeconds] = useState(targetHours * 3600);
-  useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const sec = seconds % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-}
+import Logo from '@/components/Logo';
+import Avatar from '@/components/Avatar';
+import AvatarStack from '@/components/AvatarStack';
+import { useCountdown } from '@/hooks/useCountdown';
+import { members, initialTasks, activity, SQUAD_NAME, PROJECT_NAME, CLIENT_NAME } from '@/lib/mock';
+import type { Task } from '@/types';
 
 const NAV_ITEMS = [
-  { icon: '\u2B21', label: 'Squad' },
-  { icon: '\uD83D\uDCC5', label: 'Sessions' },
-  { icon: '\uD83D\uDCBC', label: 'Project' },
-  { icon: '\uD83D\uDCB3', label: 'Billing' },
+  { icon: '⚡', label: 'Squad', active: true },
+  { icon: '🎯', label: 'Sessions', active: false },
+  { icon: '📦', label: 'Project', active: false },
+  { icon: '💳', label: 'Billing', active: false },
 ];
+
+// Session is Thursday at 7pm — compute next occurrence
+function getNextSession() {
+  const now = new Date();
+  const d = new Date(now);
+  // Thursday = 4
+  const daysUntilThurs = (4 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilThurs);
+  d.setHours(19, 0, 0, 0);
+  return d;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [activeNav, setActiveNav] = useState('Squad');
-  const [tasks, setTasks] = useState(TASKS);
-  const countdown = useCountdown(11);
+  const [rsvped, setRsvped] = useState(false);
+  const sessionDate = getNextSession();
+  const { hours, minutes, seconds } = useCountdown(sessionDate);
+  const completedCount = tasks.filter((t) => t.done).length;
+  const progress = Math.round((completedCount / tasks.length) * 100);
+  const rating = 4.8;
 
-  const doneCount = tasks.filter((t) => t.done).length;
-  const progress = Math.round((doneCount / tasks.length) * 100);
-
-  function toggleTask(id: number) {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  function toggleTask(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
   }
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
       {/* Sidebar */}
-      <aside style={s.sidebar}>
-        <div style={s.sidebarLogo}>
-          <span style={{ fontSize: '20px', color: '#5b8af0' }}>&#x2B21;</span>
-          <span style={s.logoText}>Crewers</span>
+      <aside style={styles.sidebar}>
+        <div style={styles.sidebarLogo}>
+          <Logo size={26} />
         </div>
-        <nav style={s.nav}>
+        <nav style={styles.nav}>
           {NAV_ITEMS.map((item) => (
             <button
               key={item.label}
               onClick={() => setActiveNav(item.label)}
               style={{
-                ...s.navItem,
-                ...(activeNav === item.label ? s.navItemActive : {}),
+                ...styles.navItem,
+                ...(activeNav === item.label ? styles.navItemActive : {}),
               }}
             >
-              <span style={{ fontSize: '16px' }}>{item.icon}</span>
+              <span style={styles.navIcon}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
         </nav>
-        <div style={s.sidebarBottom}>
-          <div style={s.sidebarAvatar}>EL</div>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#e8edf7' }}>Emma Rossi</div>
-            <div style={{ fontSize: '11px', color: '#7a8fad' }}>Student</div>
+        <div style={styles.sidebarBottom}>
+          <div style={styles.sidebarUser}>
+            <Avatar initials="ER" color="#4ea1ff" size={32} />
+            <div style={styles.sidebarUserInfo}>
+              <span style={styles.sidebarUserName}>Emma Rossi</span>
+              <span style={styles.sidebarUserRole}>Student</span>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main */}
-      <main style={s.main}>
+      <main style={styles.main}>
         {/* Header */}
-        <header style={s.header}>
+        <header style={styles.header}>
           <div>
-            <div style={s.squadName}>&#x26A1; PixelCrew</div>
-            <div style={s.squadMeta}>
-              <div style={s.memberStack}>
-                {MEMBERS.map((m) => (
-                  <div
-                    key={m.initials}
-                    title={m.name}
-                    style={{ ...s.memberAvatar, background: m.color }}
-                  >
-                    {m.initials}
-                  </div>
-                ))}
-              </div>
-              <span style={s.metaSep}>&#xB7;</span>
-              <span style={s.rating}>&#9733; 4.9</span>
-              <span style={s.metaSep}>&#xB7;</span>
-              <span style={{ fontSize: '13px', color: '#7a8fad' }}>5 members</span>
+            <h2 style={styles.squadName}>{SQUAD_NAME}</h2>
+            <div style={styles.squadMeta}>
+              <AvatarStack members={members} size={28} />
+              <span style={styles.memberCount}>{members.length} members</span>
+              <span style={styles.dot} />
+              <span style={styles.rating}>⭐ {rating}</span>
             </div>
           </div>
+          <button
+            style={styles.sessionBtn}
+            onClick={() => navigate('/session')}
+          >
+            🎥 Join Session
+          </button>
         </header>
 
-        {/* Content row */}
-        <div style={s.contentRow}>
-          {/* Project card */}
-          <section style={s.projectSection}>
-            <div style={s.card}>
-              <div style={s.cardHeader}>
-                <div>
-                  <div style={s.cardLabel}>CURRENT PROJECT</div>
-                  <div style={s.cardTitle}>Luminary SaaS Dashboard</div>
-                  <div style={s.cardClient}>Client: Luminary Inc. &middot; Sprint 2 of 4</div>
-                </div>
-                <span style={s.sprintBadge}>In Progress</span>
-              </div>
-
-              {/* Progress */}
-              <div style={s.progressSection}>
-                <div style={s.progressHeader}>
-                  <span style={{ fontSize: '13px', color: '#7a8fad' }}>Progress</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#5b8af0' }}>{progress}%</span>
-                </div>
-                <div style={s.progressBg}>
-                  <div style={{ ...s.progressFill, width: `${progress}%` }} />
-                </div>
-              </div>
-
-              {/* Tasks */}
-              <div style={s.taskList}>
-                <div style={s.taskListHeader}>Tasks ({doneCount}/{tasks.length})</div>
-                {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    style={s.taskItem}
-                    onClick={() => toggleTask(task.id)}
-                  >
-                    <div style={{
-                      ...s.taskCheck,
-                      ...(task.done ? s.taskCheckDone : {}),
-                    }}>
-                      {task.done && <span style={{ fontSize: '10px', color: '#080c14' }}>&#x2713;</span>}
-                    </div>
-                    <span style={{
-                      ...s.taskLabel,
-                      ...(task.done ? s.taskLabelDone : {}),
-                    }}>{task.label}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Project card */}
+        <section style={styles.projectCard}>
+          <div style={styles.projectHeader}>
+            <div>
+              <div style={styles.clientBadge}>{CLIENT_NAME}</div>
+              <h3 style={styles.projectName}>{PROJECT_NAME}</h3>
             </div>
+            <div style={styles.progressLabel}>{progress}% complete</div>
+          </div>
+          <div style={styles.progressTrack}>
+            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+          </div>
 
-            {/* Activity Feed */}
-            <div style={{ ...s.card, marginTop: '16px' }}>
-              <div style={s.taskListHeader}>Recent Activity</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '12px' }}>
-                {ACTIVITY.map((a) => (
-                  <div key={a.id} style={s.activityItem}>
-                    <div style={{ ...s.activityAvatar, background: a.color }}>{a.avatar}</div>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8edf7' }}>{a.name}</span>
-                      <span style={{ fontSize: '13px', color: '#7a8fad' }}> {a.action} </span>
-                      <span style={{ fontSize: '13px', color: '#5b8af0' }}>{a.detail}</span>
-                    </div>
-                    <span style={{ fontSize: '11px', color: '#3d5270', whiteSpace: 'nowrap' }}>{a.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Right panel */}
-          <aside style={s.rightPanel}>
-            <div style={s.sessionCard}>
-              <div style={s.sessionLabel}>NEXT LIVE SESSION</div>
-              <div style={s.sessionTitle}>Sprint Review &amp; Code Walk</div>
-              <div style={s.sessionDate}>Thursday &middot; 7:00 PM UTC</div>
-              <div style={s.countdown}>{countdown}</div>
-              <div style={s.countdownSub}>hours &middot; mins &middot; secs</div>
-              <button
-                style={s.joinBtn}
-                onClick={() => navigate('/session')}
+          {/* Task list */}
+          <div style={styles.taskList}>
+            <h4 style={styles.taskListTitle}>Tasks</h4>
+            {tasks.map((task) => (
+              <div
+                key={task.id}
+                style={styles.taskRow}
+                onClick={() => toggleTask(task.id)}
               >
-                Join Session &#x2192;
-              </button>
-              <div style={s.rsvpRow}>
-                <span style={{ fontSize: '12px', color: '#7a8fad' }}>Attending:</span>
-                <div style={s.rsvpAvatars}>
-                  {MEMBERS.slice(0, 3).map((m) => (
-                    <div key={m.initials} style={{ ...s.rsvpAvatar, background: m.color }}>
-                      {m.initials}
-                    </div>
-                  ))}
-                  <div style={{ ...s.rsvpAvatar, background: '#1e2d45', fontSize: '10px' }}>+2</div>
+                <div style={{
+                  ...styles.taskCheck,
+                  ...(task.done ? styles.taskCheckDone : {}),
+                }}>
+                  {task.done && <span style={{ fontSize: 11 }}>✓</span>}
                 </div>
+                <span style={{
+                  ...styles.taskTitle,
+                  ...(task.done ? styles.taskTitleDone : {}),
+                }}>
+                  {task.title}
+                </span>
+                {task.assignee && (
+                  <span style={styles.taskAssignee}>{task.assignee}</span>
+                )}
               </div>
-            </div>
+            ))}
+          </div>
+        </section>
 
-            <div style={{ ...s.card, marginTop: '16px' }}>
-              <div style={s.taskListHeader}>Squad Stats</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-                {[
-                  { label: 'Sessions completed', value: '8' },
-                  { label: 'Tasks shipped', value: '34' },
-                  { label: 'Avg. session rating', value: '4.9 \u2605' },
-                  { label: 'Revenue generated', value: '$2,400' },
-                ].map((stat) => (
-                  <div key={stat.label} style={s.statRow}>
-                    <span style={{ fontSize: '13px', color: '#7a8fad' }}>{stat.label}</span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#e8edf7' }}>{stat.value}</span>
-                  </div>
-                ))}
+        {/* Activity feed */}
+        <section style={styles.activitySection}>
+          <h4 style={styles.sectionTitle}>Recent Activity</h4>
+          <div style={styles.activityList}>
+            {activity.map((item) => (
+              <div key={item.id} style={styles.activityItem}>
+                <Avatar initials={item.initials} color={item.color} size={32} />
+                <div style={styles.activityText}>
+                  <span style={styles.activityWho}>{item.who}</span>
+                  <span style={styles.activityAction}> {item.action}</span>
+                </div>
+                <span style={styles.activityTime}>{item.time}</span>
               </div>
-            </div>
-          </aside>
-        </div>
+            ))}
+          </div>
+        </section>
       </main>
+
+      {/* Right panel */}
+      <aside style={styles.rightPanel}>
+        <div style={styles.sessionCard}>
+          <div style={styles.sessionCardHeader}>
+            <span style={styles.sessionLive}>NEXT SESSION</span>
+          </div>
+          <div style={styles.sessionTitle}>Session 13 — Live Build</div>
+          <div style={styles.sessionDate}>Thursday at 7:00 PM</div>
+
+          <div style={styles.countdown}>
+            <div style={styles.countdownUnit}>
+              <span style={styles.countdownNum}>{String(hours).padStart(2, '0')}</span>
+              <span style={styles.countdownLabel}>hrs</span>
+            </div>
+            <span style={styles.countdownSep}>:</span>
+            <div style={styles.countdownUnit}>
+              <span style={styles.countdownNum}>{String(minutes).padStart(2, '0')}</span>
+              <span style={styles.countdownLabel}>min</span>
+            </div>
+            <span style={styles.countdownSep}>:</span>
+            <div style={styles.countdownUnit}>
+              <span style={styles.countdownNum}>{String(seconds).padStart(2, '0')}</span>
+              <span style={styles.countdownLabel}>sec</span>
+            </div>
+          </div>
+
+          <button
+            style={styles.joinBtn}
+            onClick={() => navigate('/session')}
+          >
+            Join Session →
+          </button>
+
+          <button
+            style={{
+              ...styles.rsvpBtn,
+              ...(rsvped ? styles.rsvpBtnActive : {}),
+            }}
+            onClick={() => setRsvped((v) => !v)}
+          >
+            {rsvped ? '✓ RSVP'd' : 'RSVP'}
+          </button>
+        </div>
+
+        <div style={styles.membersCard}>
+          <h4 style={styles.membersTitle}>Your Crew</h4>
+          {members.map((m) => (
+            <div key={m.id} style={styles.memberRow}>
+              <Avatar initials={m.initials} color={m.color} size={32} />
+              <div style={styles.memberInfo}>
+                <span style={styles.memberName}>{m.name}</span>
+                <span style={styles.memberRole}>{m.role === 'lead' ? '👑 Squad Lead' : 'Member'}</span>
+              </div>
+              <div style={styles.memberOnline} />
+            </div>
+          ))}
+        </div>
+      </aside>
     </div>
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const styles: Record<string, React.CSSProperties> = {
   root: {
     display: 'flex',
     height: '100vh',
-    background: '#080c14',
     overflow: 'hidden',
+    background: 'var(--bg-base)',
   },
   sidebar: {
     width: '220px',
     flexShrink: 0,
-    background: '#0b1120',
-    borderRight: '1px solid #1e2d45',
+    background: 'var(--bg-surface)',
+    borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
-    padding: '24px 16px',
+    padding: '24px 0',
   },
   sidebarLogo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '32px',
-    paddingLeft: '4px',
-  },
-  logoText: {
-    fontSize: '17px',
-    fontWeight: 700,
-    color: '#e8edf7',
-    letterSpacing: '-0.02em',
+    padding: '0 20px 28px',
+    borderBottom: '1px solid var(--border)',
+    marginBottom: '16px',
   },
   nav: {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
+    padding: '0 12px',
     flex: 1,
   },
   navItem: {
@@ -272,307 +251,390 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '10px',
     padding: '10px 12px',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-sm)',
+    background: 'transparent',
+    color: 'var(--text-secondary)',
     fontSize: '14px',
     fontWeight: 500,
-    color: '#7a8fad',
-    background: 'transparent',
-    border: 'none',
     cursor: 'pointer',
-    transition: 'background 0.15s, color 0.15s',
+    transition: 'all 0.15s',
+    border: 'none',
+    width: '100%',
     textAlign: 'left',
   },
   navItemActive: {
-    background: 'rgba(91,138,240,0.12)',
-    color: '#5b8af0',
-    fontWeight: 600,
+    background: 'var(--accent-dim)',
+    color: 'var(--accent-bright)',
+  },
+  navIcon: {
+    fontSize: '16px',
   },
   sidebarBottom: {
+    padding: '16px 12px 0',
+    borderTop: '1px solid var(--border)',
+    marginTop: 'auto',
+  },
+  sidebarUser: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    paddingTop: '16px',
-    borderTop: '1px solid #1e2d45',
+    padding: '8px',
+    borderRadius: 'var(--radius-sm)',
   },
-  sidebarAvatar: {
-    width: '34px',
-    height: '34px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg,#5b8af0,#7c5bf0)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '12px',
-    fontWeight: 700,
-    color: '#fff',
-    flexShrink: 0,
-  },
-  main: {
-    flex: 1,
-    overflow: 'auto',
+  sidebarUserInfo: {
     display: 'flex',
     flexDirection: 'column',
   },
+  sidebarUserName: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  },
+  sidebarUserRole: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+  },
+  main: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '32px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+  },
   header: {
-    padding: '28px 32px 20px',
-    borderBottom: '1px solid #1e2d45',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   squadName: {
     fontSize: '22px',
     fontWeight: 800,
-    color: '#e8edf7',
     letterSpacing: '-0.02em',
-    marginBottom: '10px',
+    marginBottom: '8px',
+    color: 'var(--text-primary)',
   },
   squadMeta: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
   },
-  memberStack: {
-    display: 'flex',
+  memberCount: {
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
   },
-  memberAvatar: {
-    width: '28px',
-    height: '28px',
+  dot: {
+    width: '4px',
+    height: '4px',
     borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '10px',
-    fontWeight: 700,
-    color: '#fff',
-    marginLeft: '-6px',
-    border: '2px solid #0b1120',
-    flexShrink: 0,
-  },
-  metaSep: {
-    color: '#3d5270',
-    fontSize: '14px',
+    background: 'var(--text-muted)',
   },
   rating: {
     fontSize: '13px',
-    fontWeight: 700,
-    color: '#fbbf24',
+    color: 'var(--yellow)',
+    fontWeight: 600,
   },
-  contentRow: {
+  sessionBtn: {
+    padding: '10px 20px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    color: 'white',
+    borderRadius: 'var(--radius-sm)',
+    fontSize: '14px',
+    fontWeight: 600,
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+  },
+  projectCard: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '28px',
+    boxShadow: 'var(--shadow)',
+  },
+  projectHeader: {
     display: 'flex',
-    flex: 1,
-    gap: '20px',
-    padding: '24px 32px',
-    overflow: 'auto',
-  },
-  projectSection: {
-    flex: 1,
-    minWidth: 0,
-  },
-  card: {
-    background: '#0f1623',
-    border: '1px solid #1e2d45',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '20px',
+    justifyContent: 'space-between',
+    marginBottom: '16px',
   },
-  cardLabel: {
+  clientBadge: {
+    display: 'inline-block',
     fontSize: '11px',
     fontWeight: 700,
-    color: '#5b8af0',
+    textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    marginBottom: '4px',
+    color: 'var(--accent-bright)',
+    background: 'var(--accent-dim)',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    marginBottom: '6px',
   },
-  cardTitle: {
-    fontSize: '19px',
-    fontWeight: 800,
-    color: '#e8edf7',
-    letterSpacing: '-0.02em',
-    marginBottom: '4px',
+  projectName: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: 'var(--text-primary)',
   },
-  cardClient: {
+  progressLabel: {
     fontSize: '13px',
-    color: '#7a8fad',
+    fontWeight: 700,
+    color: 'var(--accent-bright)',
   },
-  sprintBadge: {
-    background: 'rgba(91,138,240,0.12)',
-    color: '#5b8af0',
-    fontSize: '12px',
-    fontWeight: 600,
-    padding: '4px 10px',
+  progressTrack: {
+    height: '6px',
     borderRadius: '99px',
-    border: '1px solid rgba(91,138,240,0.25)',
-    whiteSpace: 'nowrap',
-  },
-  progressSection: {
-    marginBottom: '22px',
-  },
-  progressHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
-  },
-  progressBg: {
-    height: '7px',
-    background: '#1e2d45',
-    borderRadius: '99px',
+    background: 'var(--border)',
     overflow: 'hidden',
+    marginBottom: '24px',
   },
   progressFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, #5b8af0, #7c5bf0)',
     borderRadius: '99px',
+    background: 'linear-gradient(90deg, #6366f1, #a78bfa)',
     transition: 'width 0.4s ease',
   },
   taskList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '4px',
   },
-  taskListHeader: {
+  taskListTitle: {
     fontSize: '12px',
     fontWeight: 700,
-    color: '#7a8fad',
-    letterSpacing: '0.06em',
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
+    marginBottom: '10px',
   },
-  taskItem: {
+  taskRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
+    padding: '10px 12px',
+    borderRadius: 'var(--radius-sm)',
     cursor: 'pointer',
-    padding: '6px 0',
+    transition: 'background 0.12s',
   },
   taskCheck: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '6px',
-    border: '1.5px solid #1e2d45',
-    background: 'transparent',
+    width: '18px',
+    height: '18px',
+    borderRadius: '5px',
+    border: '1.5px solid var(--border-light)',
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-    transition: 'background 0.15s, border-color 0.15s',
+    transition: 'all 0.15s',
   },
   taskCheckDone: {
-    background: '#5b8af0',
-    borderColor: '#5b8af0',
+    background: 'var(--accent)',
+    borderColor: 'var(--accent)',
+    color: 'white',
   },
-  taskLabel: {
+  taskTitle: {
     fontSize: '14px',
-    color: '#e8edf7',
-    transition: 'color 0.15s',
+    color: 'var(--text-primary)',
+    flex: 1,
+    transition: 'all 0.15s',
   },
-  taskLabelDone: {
-    color: '#3d5270',
+  taskTitleDone: {
     textDecoration: 'line-through',
+    color: 'var(--text-muted)',
+  },
+  taskAssignee: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    background: 'var(--bg-surface)',
+    padding: '2px 7px',
+    borderRadius: '4px',
+  },
+  activitySection: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '24px',
+  },
+  sectionTitle: {
+    fontSize: '12px',
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    marginBottom: '16px',
+  },
+  activityList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
   },
   activityItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
   },
-  activityAvatar: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#fff',
-    flexShrink: 0,
+  activityText: {
+    flex: 1,
+    fontSize: '13px',
+    lineHeight: 1.5,
+  },
+  activityWho: {
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  },
+  activityAction: {
+    color: 'var(--text-secondary)',
+  },
+  activityTime: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    whiteSpace: 'nowrap',
   },
   rightPanel: {
     width: '280px',
     flexShrink: 0,
-  },
-  sessionCard: {
-    background: 'linear-gradient(145deg, #111b2e, #0f1623)',
-    border: '1px solid #1e2d45',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
+    borderLeft: '1px solid var(--border)',
+    background: 'var(--bg-surface)',
+    overflowY: 'auto',
+    padding: '24px 20px',
     display: 'flex',
     flexDirection: 'column',
+    gap: '20px',
+  },
+  sessionCard: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  sessionCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
     gap: '8px',
   },
-  sessionLabel: {
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#5b8af0',
-    letterSpacing: '0.08em',
+  sessionLive: {
+    fontSize: '10px',
+    fontWeight: 800,
+    letterSpacing: '0.1em',
+    color: 'var(--accent-bright)',
+    background: 'var(--accent-dim)',
+    padding: '3px 8px',
+    borderRadius: '4px',
   },
   sessionTitle: {
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 700,
-    color: '#e8edf7',
-    letterSpacing: '-0.01em',
+    color: 'var(--text-primary)',
   },
   sessionDate: {
-    fontSize: '13px',
-    color: '#7a8fad',
+    fontSize: '12px',
+    color: 'var(--text-secondary)',
   },
   countdown: {
-    fontSize: '36px',
-    fontWeight: 800,
-    color: '#e8edf7',
-    letterSpacing: '0.04em',
-    fontVariantNumeric: 'tabular-nums',
-    marginTop: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    justifyContent: 'center',
+    padding: '16px 0',
+    borderTop: '1px solid var(--border)',
+    borderBottom: '1px solid var(--border)',
   },
-  countdownSub: {
+  countdownUnit: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '2px',
+  },
+  countdownNum: {
+    fontSize: '28px',
+    fontWeight: 800,
+    letterSpacing: '-0.03em',
+    color: 'var(--text-primary)',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  countdownLabel: {
     fontSize: '10px',
-    color: '#3d5270',
-    letterSpacing: '0.1em',
-    fontWeight: 600,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+  },
+  countdownSep: {
+    fontSize: '24px',
+    fontWeight: 800,
+    color: 'var(--text-muted)',
+    marginBottom: '12px',
   },
   joinBtn: {
-    marginTop: '8px',
-    background: 'linear-gradient(135deg, #5b8af0, #7c5bf0)',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '12px',
+    width: '100%',
+    padding: '11px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    color: 'white',
+    borderRadius: 'var(--radius-sm)',
     fontSize: '14px',
     fontWeight: 700,
-    color: '#fff',
+    border: 'none',
     cursor: 'pointer',
-    transition: 'opacity 0.18s',
+    boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+  },
+  rsvpBtn: {
     width: '100%',
+    padding: '10px',
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    borderRadius: 'var(--radius-sm)',
+    fontSize: '13px',
+    fontWeight: 600,
+    border: '1.5px solid var(--border)',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
   },
-  rsvpRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginTop: '4px',
+  rsvpBtnActive: {
+    color: 'var(--green)',
+    borderColor: 'var(--green)',
+    background: 'rgba(58,210,159,0.08)',
   },
-  rsvpAvatars: {
-    display: 'flex',
+  membersCard: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '20px',
   },
-  rsvpAvatar: {
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '9px',
+  membersTitle: {
+    fontSize: '12px',
     fontWeight: 700,
-    color: '#fff',
-    marginLeft: '-4px',
-    border: '2px solid #0f1623',
-    flexShrink: 0,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    marginBottom: '14px',
   },
-  statRow: {
+  memberRow: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '8px 0',
-    borderBottom: '1px solid #1a2640',
+    gap: '10px',
+    padding: '6px 0',
+  },
+  memberInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  memberName: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  },
+  memberRole: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+  },
+  memberOnline: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: 'var(--green)',
+    boxShadow: '0 0 6px rgba(58,210,159,0.5)',
   },
 };
